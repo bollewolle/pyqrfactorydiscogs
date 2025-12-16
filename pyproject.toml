@@ -1,0 +1,11 @@
+[project]
+name = "pyqrfactorydiscogs"
+version = "0.0.1"
+description = "Generate CSV for QR Factory 3 from a Discogs collection"
+authors = [
+    {name = "Bram", email = "dev@bollewolle.be"}
+]
+requires-python = ">=3.14"
+dependencies = [
+    "python3-discogs-client"
+    ]
