@@ -184,18 +184,25 @@ def preview_csv():
         releases_data = []
         for folder in all_folders:
             try:
-                folder_releases_dict = client.get_collection_releases_by_folder(folder['id'])
+                # Get releases from this specific folder - convert to int explicitly
+                folder_id = int(str(folder.id))
+                folder_releases_dict = client.get_collection_releases_by_folder(folder_id)
                 if folder_releases_dict:
-                    for folder_releases in folder_releases_dict.values():
+                    # Iterate through all release lists in the dictionary
+                    for release_list in folder_releases_dict.values():
                         # Filter releases by selected IDs
                         filtered_releases = [
-                            r for r in folder_releases
+                            r for r in release_list
                             if str(r.get('id')) in selected_ids
                         ]
                         releases_data.extend(filtered_releases)
             except Exception as e:
-                current_app.logger.warning(f"Error fetching releases from folder {folder['id']}: {str(e)}")
+                current_app.logger.warning(f"Error fetching releases from folder {folder.id}: {str(e)}")
                 continue
+
+        # Convert to list of dicts for processing (each item is already a dict)
+        if not isinstance(releases_data, list):
+            releases_data = [releases_data]
 
         if not releases_data:
             flash('No valid releases selected', 'error')
@@ -207,9 +214,19 @@ def preview_csv():
 
         for release in releases_data:
             try:
-                row = processor.extract_release_info(release)
+                # Create the expected format for extract_release_info (wrap in list)
+                release_format = [{
+                    'id': release.get('id'),
+                    'title': release.get('title'),
+                    'artist': release.get('artist'),
+                    'year': release.get('year'),
+                    'format': release.get('format'),
+                    'label': release.get('label'),
+                    'url': release.get('url')
+                }]
+                row = processor.extract_release_info(release_format)
                 if row:
-                    csv_rows.append(row)
+                    csv_rows.append(row[0])  # Extract the single dict from list
             except Exception as e:
                 current_app.logger.warning(f"Error processing release: {str(e)}")
                 continue
@@ -264,9 +281,9 @@ def download_csv():
         # Add data rows
         for release in session['csv_preview']:
             row = [
-                release.get('artist', ''),
-                release.get('title', ''),
-                release.get('url', '')
+                release.get('Artist', ''),
+                release.get('Title', ''),
+                release.get('URL', '')
             ]
             writer.writerow(row)
 

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Select Releases from "{{ folder_name }}" Folder</h1>
+
+    <form method="POST" action="{{ url_for('main.browse_releases') }}">
+        <div style="margin-bottom: 20px;">
+            <label for="sort_order">
+                Sort by:
+                <select id="sort_order" name="sort_order">
+                    <option value="newest_first" {% if sort_by == 'date' %}selected{% endif %}>Newest First</option>
+                    <option value="oldest_first" {% if sort_by == 'year_asc' %}selected{% endif %}>Oldest First</option>
+                </select>
+            </label>
+
+            <button type="submit" name="sort_only" value="1" style="margin-left: 10px;">Apply Sorting</button>
+        </div>
+
+        <table id="releases-table">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Year</th>
+                    <th>Type</th>
+                    <th>Date Added</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for release in releases %}
+                <tr class="release-row">
+                    <td>
+                        <input type="checkbox" name="release_ids"
+                               value="{{ release.id }}" id="release_{{ release.id }}">
+                    </td>
+                    <td>{{ release.basic_information.title }}</td>
+                    <td>{{ release.basic_information.artists|join(', ') }}</td>
+                    <td>{{ release.basic_information.year }}</td>
+                    <td>{{ release.basic_information.type }}</td>
+                    <td>{{ release.date_added.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" id="select-all">Select All</button>
+            <button type="submit" id="deselect-all" class="btn-secondary">Deselect All</button>
+        </div>
+
+        <div class="actions">
+            <button type="submit" name="action" value="preview">Preview CSV</button>
+            <a href="{{ url_for('main.select_folder') }}" class="btn-secondary">Back to Folders</a>
+        </div>
+    </form>
+{% endblock %}

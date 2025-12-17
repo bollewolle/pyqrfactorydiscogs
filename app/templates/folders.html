@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% block content %}
+<h1>Select Collection Folder</h1>
+
+<p>
+  Please select which folder from your Discogs collection you want to process:
+</p>
+
+<form method="POST" action="{{ url_for('main.select_folder') }}">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Number of Releases</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for folder in folders %}
+      <tr>
+        <td>{{ folder.name }}</td>
+        <td>{{ folder.count }}</td>
+        <td>
+          <button type="submit" name="folder_id" value="{{ folder.id }}">
+            Select
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+
+<div class="actions">
+  <a href="{{ url_for('main.index') }}" class="btn-secondary"
+    >Back to Authentication</a
+  >
+</div>
+{% endblock %}

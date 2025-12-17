@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% block content %}
+<h1>Discogs Collection to QR Factory CSV Generator</h1>
+
+<form method="POST" action="{{ url_for('main.index') }}">
+  <label for="consumer_key">Consumer Key:</label>
+  <input
+    type="text"
+    id="consumer_key"
+    name="consumer_key"
+    value="{{ form.consumer_key.data if form else '' }}"
+    required
+  />
+
+  <label for="consumer_secret">Consumer Secret:</label>
+  <input
+    type="password"
+    id="consumer_secret"
+    name="consumer_secret"
+    value="{{ form.consumer_secret.data if form else '' }}"
+    required
+  />
+
+  <button type="submit">Authenticate with Discogs</button>
+</form>
+
+{% if authenticated %}
+<div
+  style="
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #e8f5e9;
+    border-radius: 4px;
+  "
+>
+  <strong>✓ Authentication successful!</strong> You can now browse your
+  collection.
+</div>
+{% endif %} {% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %} {% block content %}
+<h1>CSV Preview</h1>
+
+<p>Review the CSV data before generating the final file:</p>
+
+<div style="overflow-x: auto; margin-bottom: 20px">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Artist</th>
+        <th>Year</th>
+        <th>Type</th>
+        <th>Format</th>
+        <th>Catalog Number</th>
+        <th>Barcode</th>
+        <th>Label</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in csv_rows %}
+      <tr>
+        <td>{{ row.title }}</td>
+        <td>{{ row.artist }}</td>
+        <td>{{ row.year }}</td>
+        <td>{{ row.type }}</td>
+        <td>{{ row.format }}</td>
+        <td>{{ row.catalog_number }}</td>
+        <td>{{ row.barcode }}</td>
+        <td>{{ row.label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<form method="POST" action="{{ url_for('main.preview_csv') }}">
+  <div class="actions">
+    <button
+      type="submit"
+      name="action"
+      value="back"
+      formaction="{{ url_for('main.select_folder') }}"
+    >
+      Back to Release Selection
+    </button>
+    <button type="submit" name="action" value="generate">
+      Generate CSV File
+    </button>
+  </div>
+</form>
+{% endblock %}
