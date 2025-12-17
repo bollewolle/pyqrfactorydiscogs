@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block content %}
 <h1>Discogs Collection to QR Factory CSV Generator</h1>
 
-<form method="POST" action="{{ url_for('main.index') }}">
+<form method="POST" action="{{ url_for('main.authenticate') }}">
   <label for="consumer_key">Consumer Key:</label>
   <input
     type="text"
