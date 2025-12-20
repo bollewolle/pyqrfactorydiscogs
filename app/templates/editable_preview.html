@@ -1,0 +1,366 @@
+{% extends "base.html" %} {% block content %}
+<h1>CSV Preview - Editable</h1>
+
+<p>Review and edit the CSV data before generating the final file:</p>
+
+<form
+  method="POST"
+  action="{{ url_for('main.generate_editable_csv') }}"
+  id="csvForm"
+>
+  <div style="overflow-x: auto; margin-bottom: 20px">
+    <table id="csvTable">
+      <thead>
+        <tr>
+          <th>Artist</th>
+          <th>Title</th>
+          <th>URL</th>
+          <th>Type</th>
+          <th>OutputSize</th>
+          <th>FileType</th>
+          <th>ColorSpace</th>
+          <th>RotationAngle</th>
+          <th>ReliabilityLevel</th>
+          <th>UseAutoReliabilityLevel</th>
+          <th>PixelRoundness</th>
+          <th>PixelColorType</th>
+          <th>BackgroundColorType</th>
+          <th>BackgroundColor</th>
+          <th>PixelColorStart</th>
+          <th>PixelColorEnd</th>
+          <th>GradientAngle</th>
+          <th>IconPath</th>
+          <th>IconLockToSquares</th>
+          <th>IconSizePercent</th>
+          <th>IconBorderType</th>
+          <th>IconBorderPercent</th>
+          <th>IconBorderSquareCornerSize</th>
+          <th>IconBorderColor</th>
+          <th>BottomText</th>
+          <th>BottomTextSize</th>
+          <th>BottomTextColor</th>
+          <th>BottomTextFont</th>
+          <th>BottomTextFontStyle</th>
+          <th>SafeZonePercent</th>
+          <th>SafeZoneColor</th>
+          <th>Content</th>
+          <th>FileName</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in csv_rows %}
+        <tr>
+          <td>
+            <input
+              type="text"
+              name="type_{{ loop.index }}"
+              value="{{ row.Type }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="output_size_{{ loop.index }}"
+              value="{{ row.OutputSize }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="file_type_{{ loop.index }}"
+              value="{{ row.FileType }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="color_space_{{ loop.index }}"
+              value="{{ row.ColorSpace }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="rotation_angle_{{ loop.index }}"
+              value="{{ row.RotationAngle }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="reliability_level_{{ loop.index }}"
+              value="{{ row.ReliabilityLevel }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="use_auto_reliability_{{ loop.index }}"
+              value="{{ row.UseAutoReliabilityLevel }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="pixel_roundness_{{ loop.index }}"
+              value="{{ row.PixelRoundness }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="pixel_color_type_{{ loop.index }}"
+              value="{{ row.PixelColorType }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="background_color_type_{{ loop.index }}"
+              value="{{ row.BackgroundColorType }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="background_color_{{ loop.index }}"
+              value="{{ row.BackgroundColor }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="pixel_color_start_{{ loop.index }}"
+              value="{{ row.PixelColorStart }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="pixel_color_end_{{ loop.index }}"
+              value="{{ row.PixelColorEnd }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="gradient_angle_{{ loop.index }}"
+              value="{{ row.GradientAngle }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_path_{{ loop.index }}"
+              value="{{ row.IconPath }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_lock_{{ loop.index }}"
+              value="{{ row.IconLockToSquares }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_size_{{ loop.index }}"
+              value="{{ row.IconSizePercent }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_border_type_{{ loop.index }}"
+              value="{{ row.IconBorderType }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_border_percent_{{ loop.index }}"
+              value="{{ row.IconBorderPercent }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_border_corner_{{ loop.index }}"
+              value="{{ row.IconBorderSquareCornerSize }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="icon_border_color_{{ loop.index }}"
+              value="{{ row.IconBorderColor }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="bottom_text_{{ loop.index }}"
+              value="{{ row.BottomText }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="bottom_text_size_{{ loop.index }}"
+              value="{{ row.BottomTextSize }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="bottom_text_color_{{ loop.index }}"
+              value="{{ row.BottomTextColor }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="bottom_text_font_{{ loop.index }}"
+              value="{{ row.BottomTextFont }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="bottom_text_font_style_{{ loop.index }}"
+              value="{{ row.BottomTextFontStyle }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="safe_zone_percent_{{ loop.index }}"
+              value="{{ row.SafeZonePercent }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="safe_zone_color_{{ loop.index }}"
+              value="{{ row.SafeZoneColor }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="content_{{ loop.index }}"
+              value="{{ row.Content }}"
+              class="editable-input"
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              name="filename_{{ loop.index }}"
+              value="{{ row.FileName }}"
+              class="editable-input"
+            />
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <input type="hidden" name="row_count" value="{{ csv_rows|length }}" />
+
+  <div class="actions">
+    <button
+      type="button"
+      onclick="window.location.href='{{ url_for('main.folders') }}';"
+      class="btn-secondary"
+    >
+      Back to Release Selection
+    </button>
+    <button type="submit" name="action" value="generate">
+      Generate CSV File
+    </button>
+  </div>
+</form>
+
+<style>
+  .editable-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  .editable-input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+  }
+
+  tr:hover {
+    background-color: #f5f5f5;
+  }
+</style>
+
+<script>
+  // Add some basic table functionality
+  document.addEventListener("DOMContentLoaded", function () {
+    // Make table scrollable horizontally
+    const tableContainer = document.querySelector('div[style*="overflow-x"]');
+    if (tableContainer) {
+      tableContainer.style.maxHeight = "600px";
+      tableContainer.style.overflowY = "auto";
+    }
+  });
+</script>
+{% endblock %}

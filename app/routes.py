@@ -217,7 +217,7 @@ def releases(folder_id):
 @bp.route('/preview/', methods=['GET', 'POST'])
 def preview_csv():
     """
-    Generate CSV preview based on selected releases
+    Generate CSV preview based on selected releases and redirect to editable preview
     """
     print(f"preview - BEGINNING OF CODE")
 
@@ -294,16 +294,264 @@ def preview_csv():
         session['csv_preview'] = csv_rows
         session['selected_releases_count'] = len(csv_rows)
 
-        return render_template(
-            'preview.html',
-            csv_rows=csv_rows,
-            count=len(csv_rows)
-        )
+        # Redirect to editable preview instead of showing basic preview
+        return redirect(url_for('main.editable_preview'))
 
     except Exception as e:
         current_app.logger.error(f"Error generating preview: {str(e)}")
         flash('Failed to generate CSV preview', 'error')
         return redirect(request.referrer or url_for('main.folders'))
+
+@bp.route('/editable-preview/', methods=['GET'])
+def editable_preview():
+    """
+    Show editable CSV preview based on selected releases
+    """
+    # Check if authenticated
+    if 'oauth_token' not in session or 'oauth_secret' not in session:
+        flash('Please authenticate first', 'error')
+        return redirect(url_for('main.index'))
+
+    # Check if preview exists
+    if 'csv_preview' not in session:
+        flash('No CSV preview available', 'error')
+        return redirect(url_for('main.folders'))
+
+    try:
+        # Get the preview data from session
+        csv_preview_data = session['csv_preview']
+        
+        # Create full CSV rows with all template fields
+        csv_rows = []
+        
+        # Read template to get the format
+        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            template_format = next(reader)
+        
+        # Create full rows for each release
+        for release in csv_preview_data:
+            # Start with template format
+            row_data = {}
+            
+            # Map the basic fields
+            for i, field_name in enumerate(header):
+                if field_name == 'Type':
+                    row_data[field_name] = template_format[i]  # Keep template value
+                elif field_name == 'OutputSize':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'FileType':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'ColorSpace':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'RotationAngle':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'ReliabilityLevel':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'UseAutoReliabilityLevel':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'PixelRoundness':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'PixelColorType':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BackgroundColorType':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BackgroundColor':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'PixelColorStart':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'PixelColorEnd':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'GradientAngle':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconPath':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconLockToSquares':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconSizePercent':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconBorderType':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconBorderPercent':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconBorderSquareCornerSize':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'IconBorderColor':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BottomText':
+                    row_data[field_name] = template_format[i].replace('{artist}', release.get('artist', '')).replace('{title}', release.get('title', ''))
+                elif field_name == 'BottomTextSize':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BottomTextColor':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BottomTextFont':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'BottomTextFontStyle':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'SafeZonePercent':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'SafeZoneColor':
+                    row_data[field_name] = template_format[i]
+                elif field_name == 'Content':
+                    row_data[field_name] = template_format[i].replace('{url}', release.get('url', ''))
+                elif field_name == 'FileName':
+                    row_data[field_name] = template_format[i].replace('{BottomText}', release.get('artist', '') + ' – ' + release.get('title', ''))
+                elif field_name == 'Artist':
+                    row_data[field_name] = release.get('Artist', '')
+                elif field_name == 'Title':
+                    row_data[field_name] = release.get('Title', '')
+                elif field_name == 'URL':
+                    row_data[field_name] = release.get('URL', '')
+                else:
+                    row_data[field_name] = ''
+            
+            csv_rows.append(row_data)
+
+        return render_template(
+            'editable_preview.html',
+            csv_rows=csv_rows,
+            count=len(csv_rows)
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error showing editable preview: {str(e)}")
+        flash('Failed to show editable CSV preview', 'error')
+        return redirect(url_for('main.folders'))
+
+@bp.route('/generate-editable-csv', methods=['POST'])
+def generate_editable_csv():
+    """
+    Generate CSV from editable preview data
+    """
+    # Check if authenticated
+    if 'oauth_token' not in session or 'oauth_secret' not in session:
+        flash('Please authenticate first', 'error')
+        return redirect(url_for('main.index'))
+
+    try:
+        # Get row count
+        row_count = int(request.form.get('row_count', 0))
+        
+        if row_count == 0:
+            flash('No data to generate CSV', 'error')
+            return redirect(url_for('main.folders'))
+        
+        # Read template header
+        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+            reader = csv.reader(f)
+            header = next(reader)
+        
+        # Collect all editable data
+        csv_rows = []
+        for i in range(1, row_count + 1):
+            row_data = {}
+            
+            # Get all fields from form
+            for field_name in header:
+                # Convert field name to parameter name
+                param_name = field_name.lower().replace(' ', '_')
+                if field_name == 'Artist':
+                    row_data[field_name] = request.form.get(f'artist_{i}', '')
+                elif field_name == 'Title':
+                    row_data[field_name] = request.form.get(f'title_{i}', '')
+                elif field_name == 'URL':
+                    row_data[field_name] = request.form.get(f'url_{i}', '')
+                elif field_name == 'Type':
+                    row_data[field_name] = request.form.get(f'type_{i}', '')
+                elif field_name == 'OutputSize':
+                    row_data[field_name] = request.form.get(f'output_size_{i}', '')
+                elif field_name == 'FileType':
+                    row_data[field_name] = request.form.get(f'file_type_{i}', '')
+                elif field_name == 'ColorSpace':
+                    row_data[field_name] = request.form.get(f'color_space_{i}', '')
+                elif field_name == 'RotationAngle':
+                    row_data[field_name] = request.form.get(f'rotation_angle_{i}', '')
+                elif field_name == 'ReliabilityLevel':
+                    row_data[field_name] = request.form.get(f'reliability_level_{i}', '')
+                elif field_name == 'UseAutoReliabilityLevel':
+                    row_data[field_name] = request.form.get(f'use_auto_reliability_{i}', '')
+                elif field_name == 'PixelRoundness':
+                    row_data[field_name] = request.form.get(f'pixel_roundness_{i}', '')
+                elif field_name == 'PixelColorType':
+                    row_data[field_name] = request.form.get(f'pixel_color_type_{i}', '')
+                elif field_name == 'BackgroundColorType':
+                    row_data[field_name] = request.form.get(f'background_color_type_{i}', '')
+                elif field_name == 'BackgroundColor':
+                    row_data[field_name] = request.form.get(f'background_color_{i}', '')
+                elif field_name == 'PixelColorStart':
+                    row_data[field_name] = request.form.get(f'pixel_color_start_{i}', '')
+                elif field_name == 'PixelColorEnd':
+                    row_data[field_name] = request.form.get(f'pixel_color_end_{i}', '')
+                elif field_name == 'GradientAngle':
+                    row_data[field_name] = request.form.get(f'gradient_angle_{i}', '')
+                elif field_name == 'IconPath':
+                    row_data[field_name] = request.form.get(f'icon_path_{i}', '')
+                elif field_name == 'IconLockToSquares':
+                    row_data[field_name] = request.form.get(f'icon_lock_{i}', '')
+                elif field_name == 'IconSizePercent':
+                    row_data[field_name] = request.form.get(f'icon_size_{i}', '')
+                elif field_name == 'IconBorderType':
+                    row_data[field_name] = request.form.get(f'icon_border_type_{i}', '')
+                elif field_name == 'IconBorderPercent':
+                    row_data[field_name] = request.form.get(f'icon_border_percent_{i}', '')
+                elif field_name == 'IconBorderSquareCornerSize':
+                    row_data[field_name] = request.form.get(f'icon_border_corner_{i}', '')
+                elif field_name == 'IconBorderColor':
+                    row_data[field_name] = request.form.get(f'icon_border_color_{i}', '')
+                elif field_name == 'BottomText':
+                    row_data[field_name] = request.form.get(f'bottom_text_{i}', '')
+                elif field_name == 'BottomTextSize':
+                    row_data[field_name] = request.form.get(f'bottom_text_size_{i}', '')
+                elif field_name == 'BottomTextColor':
+                    row_data[field_name] = request.form.get(f'bottom_text_color_{i}', '')
+                elif field_name == 'BottomTextFont':
+                    row_data[field_name] = request.form.get(f'bottom_text_font_{i}', '')
+                elif field_name == 'BottomTextFontStyle':
+                    row_data[field_name] = request.form.get(f'bottom_text_font_style_{i}', '')
+                elif field_name == 'SafeZonePercent':
+                    row_data[field_name] = request.form.get(f'safe_zone_percent_{i}', '')
+                elif field_name == 'SafeZoneColor':
+                    row_data[field_name] = request.form.get(f'safe_zone_color_{i}', '')
+                elif field_name == 'Content':
+                    row_data[field_name] = request.form.get(f'content_{i}', '')
+                elif field_name == 'FileName':
+                    row_data[field_name] = request.form.get(f'filename_{i}', '')
+                else:
+                    row_data[field_name] = ''
+            
+            csv_rows.append(row_data)
+        
+        # Generate CSV content
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        
+        # Write header
+        writer.writerow(header)
+        
+        # Write data rows
+        for row in csv_rows:
+            row_values = [row.get(field, '') for field in header]
+            writer.writerow(row_values)
+        
+        csv_content = csv_buffer.getvalue()
+
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'discogs_collection_{timestamp}.csv'
+
+        # Return as downloadable file
+        return send_file(
+            io.BytesIO(csv_content.encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error generating editable CSV: {str(e)}")
+        flash('Failed to generate CSV file', 'error')
+        return redirect(url_for('main.folders'))
 
 @bp.route('/download-csv', methods=['POST'])
 def download_csv():
