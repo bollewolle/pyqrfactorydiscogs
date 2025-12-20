@@ -10,7 +10,6 @@ import os
 import csv
 import io
 from datetime import datetime
-from typing import List, Dict, Any
 from dotenv import load_dotenv, set_key
 
 # Import local modules
@@ -22,9 +21,6 @@ bp = Blueprint('main', __name__)
 @bp.route('/')
 def index():
     """Main page with authentication form or auto-authentication if .env exists"""
-    import os
-    from dotenv import load_dotenv
-    
     # Check if .env file exists and has all required credentials
     if os.path.exists('.env'):
         load_dotenv()
