@@ -45,8 +45,8 @@
         </table>
 
         <div style="margin-top: 20px;">
-            <button type="submit" id="select-all">Select All</button>
-            <button type="submit" id="deselect-all" class="btn-secondary">Deselect All</button>
+            <button type="button" name="select-all" id="select-all">Select All</button>
+            <button type="button" name="deselect-all" id="deselect-all" class="btn-secondary">Deselect All</button>
         </div>
 
         <div class="actions">
@@ -54,4 +54,24 @@
             <a href="{{ url_for('main.folders') }}" class="btn-secondary">Back to Folders</a>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select All button
+            document.getElementById('select-all').addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('input[name="release_ids"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = true;
+                });
+            });
+
+            // Deselect All button
+            document.getElementById('deselect-all').addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('input[name="release_ids"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = false;
+                });
+            });
+        });
+    </script>
 {% endblock %}

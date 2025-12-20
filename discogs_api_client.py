@@ -242,17 +242,17 @@ class DiscogsCollectionClient:
 
         try:
             # Get the release from Discogs API
-            release = self.client.release(release_id)
+            rel_id = self.client.release(release_id)
 
             # Extract release details in the same format as get_collection_releases_by_folder
             release_data = {
-                'id': release.id,
-                'title': release.title,
-                'artist': release.artists[0].name if release.artists else None,
-                'year': release.year,
-                'format': release.formats,
-                'label': release.labels[0].name if release.labels else None,
-                'url': str(release.url).split('-', 1)[0]
+                'id': rel_id.id,
+                'title': rel_id.title,
+                'artist': rel_id.artists[0].name if rel_id.artists else None,
+                'year': rel_id.year,
+                'format': rel_id.formats,
+                'label': rel_id.labels[0].name if rel_id.labels else None,
+                'url': rel_id.url.split('-', 1)[0]
             }
 
             return release_data

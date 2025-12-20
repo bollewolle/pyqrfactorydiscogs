@@ -95,11 +95,6 @@ def folders():
         if folder_id:
             return redirect(url_for('main.releases', folder_id=folder_id))
 
-    print(f"folders - consumer_key: {session.get('consumer_key', '')}")
-    print(f"folders - consumer_secret: {session.get('consumer_secret', '')}")
-    print(f"folders - oauth_token: {session.get('oauth_token', '')}")
-    print(f"folders - oauth_secret: {session.get('oauth_secret', '')}")
-
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
@@ -140,8 +135,8 @@ def releases(folder_id):
     Display releases from a specific folder
     """
 
-    # Handle POST request when folder is selected
-    if request.method == 'POST':
+    # Handle POST request when releases are selected and preview is to be generated
+    if request.method == 'POST' and 'action' in request.form:
         
         # print(f"folders - POST - user: {client.user}")
         print(f"releases - POST - request release_ids: {request.form.getlist('release_ids')}")
@@ -250,27 +245,18 @@ def preview_csv():
         # Authenticate with Discogs API
         client.authenticate()
 
-        # Get releases for selected IDs - need to get all folders first
-        # Then find the releases with matching IDs
-        all_folders = client.get_collection_folders()
-
+        # Get releases for selected IDs directly using release IDs
+        # This is more efficient than getting all folders and filtering
         releases_data = []
-        for folder in all_folders:
+        for release_id in selected_ids:
             try:
-                # Get releases from this specific folder - convert to int explicitly
-                folder_id = int(str(folder.id))
-                folder_releases_dict = client.get_collection_releases_by_folder(folder_id)
-                if folder_releases_dict:
-                    # Iterate through all release lists in the dictionary
-                    for release_list in folder_releases_dict.values():
-                        # Filter releases by selected IDs
-                        filtered_releases = [
-                            r for r in release_list
-                            if str(r.get('id')) in selected_ids
-                        ]
-                        releases_data.extend(filtered_releases)
+                # Convert to int explicitly as get_release_by_releaseid expects int
+                release_id_int = int(str(release_id))
+                release = client.get_release_by_releaseid(release_id_int)
+                if release:
+                    releases_data.append(release)
             except Exception as e:
-                current_app.logger.warning(f"Error fetching releases from folder {folder.id}: {str(e)}")
+                current_app.logger.warning(f"Error fetching release {release_id}: {str(e)}")
                 continue
 
         # Convert to list of dicts for processing (each item is already a dict)
@@ -293,7 +279,7 @@ def preview_csv():
                     'title': release.get('title'),
                     'artist': release.get('artist'),
                     'year': release.get('year'),
-                    'format': release.get('format', [])[0].name if release.get('format') else None,
+                    'format': release.get('format', [])[0].get('name') if release.get('format') else None,
                     'label': release.get('label'),
                     'url': release.get('url')
                 }]
