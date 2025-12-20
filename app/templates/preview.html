@@ -34,13 +34,13 @@
   </table>
 </div>
 
-<form method="POST" action="{{ url_for('main.preview_csv') }}">
+<form method="POST" action="{{ url_for('main.preview') }}">
   <div class="actions">
     <button
       type="submit"
       name="action"
       value="back"
-      formaction="{{ url_for('main.select_folder') }}"
+      formaction="{{ url_for('main.folders') }}"
     >
       Back to Release Selection
     </button>

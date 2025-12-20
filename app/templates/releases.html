@@ -3,7 +3,7 @@
 {% block content %}
     <h1>Select Releases from "{{ folder_name }}" Folder</h1>
 
-    <form method="POST" action="{{ url_for('main.browse_releases') }}">
+    <form method="POST" action="{{ url_for('main.releases', folder_id=folder_id) }}">
         <div style="margin-bottom: 20px;">
             <label for="sort_order">
                 Sort by:
@@ -34,11 +34,11 @@
                         <input type="checkbox" name="release_ids"
                                value="{{ release.id }}" id="release_{{ release.id }}">
                     </td>
-                    <td>{{ release.basic_information.title }}</td>
-                    <td>{{ release.basic_information.artists|join(', ') }}</td>
-                    <td>{{ release.basic_information.year }}</td>
-                    <td>{{ release.basic_information.type }}</td>
-                    <td>{{ release.date_added.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ release.title }}</td>
+                    <td>{{ release.artist }}</td>
+                    <td>{{ release.year }}</td>
+                    <td>{% if release.format %}{{ release.format[0].name }}{% endif %}</td>
+                    <td>N/A</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -51,7 +51,7 @@
 
         <div class="actions">
             <button type="submit" name="action" value="preview">Preview CSV</button>
-            <a href="{{ url_for('main.select_folder') }}" class="btn-secondary">Back to Folders</a>
+            <a href="{{ url_for('main.folders') }}" class="btn-secondary">Back to Folders</a>
         </div>
     </form>
 {% endblock %}
