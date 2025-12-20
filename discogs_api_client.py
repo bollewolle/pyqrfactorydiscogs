@@ -222,6 +222,46 @@ class DiscogsCollectionClient:
         except DiscogsAPIError as error:
             raise ConnectionError(f"Failed to retrieve collection items: {error}")
 
+    def get_release_by_releaseid(self, release_id: int) -> Dict:
+        """
+        Retrieves a specific release by its ID from the Discogs API.
+
+        Args:
+            release_id (int): The ID of the release to retrieve
+
+        Returns:
+            Dict: Dictionary containing release metadata including id, title, artist,
+            year, format, label and url in the same format as get_collection_releases_by_folder
+
+        Raises:
+            ConnectionError: If API request fails or user is not authenticated
+            ValueError: If release_id is invalid or release data cannot be retrieved
+        """
+        if self.client is None:
+            raise ConnectionError("Client not initialized")
+
+        try:
+            # Get the release from Discogs API
+            release = self.client.release(release_id)
+
+            # Extract release details in the same format as get_collection_releases_by_folder
+            release_data = {
+                'id': release.id,
+                'title': release.title,
+                'artist': release.artists[0].name if release.artists else None,
+                'year': release.year,
+                'format': release.formats,
+                'label': release.labels[0].name if release.labels else None,
+                'url': str(release.url).split('-', 1)[0]
+            }
+
+            return release_data
+
+        except DiscogsAPIError as error:
+            raise ConnectionError(f"Failed to retrieve release {release_id}: {error}")
+        except (AttributeError, IndexError) as error:
+            raise ValueError(f"Invalid release data format for release {release_id}: {error}")
+
 def main() -> None:
     """
     Example usage demonstrating Discogs API OAuth authentication and collection data retrieval.
@@ -286,6 +326,11 @@ def main() -> None:
             url = r.get("url", "N/A")
 
             print(f"Release ID: {release_id} - Release Name: {artist} - {title} - URL: {url}")
+        
+
+        release_id_single = int(input("Please enter a Release ID of the release you want to retrieve the information for: "))
+        release_id_single_result = collection.get_release_by_releaseid(release_id_single)
+        print(f"Release ID: {release_id_single_result.get("id", "N/A")} - Release Name: {release_id_single_result.get("artist", "N/A")} - {release_id_single_result.get("title", "N/A")} - URL: {release_id_single_result.get("url", "N/A")}")
 
     else:
         print("User is None")
