@@ -87,18 +87,6 @@ def authenticate():
         # Authenticate with Discogs API (method doesn't return value, sets client attributes)
         client.authenticate()
 
-        # print(f"authenticate - user = {client.user}")
-
-        
-        # if client.user is not None:
-        #     print()
-        #     print(" == User ==")
-        #     print(f"    * username           = {client.user.username}")
-        #     print(f"    * name               = {client.user.name}")
-        #     print(" == Access Token ==")
-        #     print(f"    * oauth_token        = {client.oauth_token}")
-        #     print(f"    * oauth_token_secret = {client.oauth_token_secret}")
-        #     print(" Authentication complete. Future requests will be signed with the above tokens.")
 
         # Store credentials in session for later use
         session['consumer_key'] = consumer_key
@@ -158,12 +146,10 @@ def folders():
         # Authenticate with Discogs API
         client.authenticate()
 
-        # print(f"folders - user: {client.user}")
 
         # Get collection folders
         folders_list = client.get_collection_folders()
 
-        # print(f"folders - folders_list: {folders_list}")
 
         if not folders_list:
             flash('No folders found in your collection', 'info')
@@ -184,12 +170,9 @@ def releases(folder_id):
     # Handle POST request when releases are selected and preview is to be generated
     if request.method == 'POST' and 'action' in request.form:
         
-        # print(f"folders - POST - user: {client.user}")
-        print(f"releases - POST - request release_ids: {request.form.getlist('release_ids')}")
 
         release_ids = request.form.getlist('release_ids')
         
-        print(f"releases - POST - release_ids: {release_ids}")
 
         if release_ids:
             return redirect(url_for('main.preview_csv', release_ids=release_ids))
@@ -211,12 +194,10 @@ def releases(folder_id):
         # Authenticate with Discogs API
         client.authenticate()
 
-        # print(f"releases - user: {client.user}")
 
         # Get releases from folder
         releases_dict = client.get_collection_releases_by_folder(folder_id)
 
-        # print(f"releases - AFTER GET COLLECTION: {releases_dict}")
 
         if not releases_dict:
             flash('No releases found in this folder', 'info')
@@ -225,10 +206,8 @@ def releases(folder_id):
         # Convert dict values to list for easier processing
         releases_list = []
         for folder_releases in releases_dict.values():
-            # print(f"releases - releases_dict.values(): {folder_releases}")
             releases_list.append(folder_releases)
 
-        # print(f"releases - BEFORE SORT: {releases_list}")
 
         # Sort by date (newest first)
         sorted_releases = sorted(
@@ -237,7 +216,6 @@ def releases(folder_id):
             reverse=True
         )
 
-        # print(f"releases - AFTER SORT: {sorted_releases}")
 
         # Handle POST requests (e.g., sorting)
         if request.method == 'POST':
@@ -265,7 +243,6 @@ def preview_csv():
     """
     Generate CSV preview based on selected releases and redirect to editable preview
     """
-    print(f"preview - BEGINNING OF CODE")
 
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
@@ -273,7 +250,6 @@ def preview_csv():
         return redirect(url_for('main.index'))
 
     try:
-        print(f"preview - BEGINNING OF CODE - release id: {request.args.getlist('release_ids')}")
         # Get selected release IDs from form
         selected_ids = request.args.getlist('release_ids')
 
