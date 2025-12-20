@@ -11,6 +11,7 @@ import csv
 import io
 from datetime import datetime
 from typing import List, Dict, Any
+from dotenv import load_dotenv, set_key
 
 # Import local modules
 from discogs_api_client import DiscogsCollectionClient
@@ -20,7 +21,48 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    """Main page with authentication form"""
+    """Main page with authentication form or auto-authentication if .env exists"""
+    import os
+    from dotenv import load_dotenv
+    
+    # Check if .env file exists and has all required credentials
+    if os.path.exists('.env'):
+        load_dotenv()
+        
+        # Get credentials from environment
+        consumer_key = os.getenv('DISCOGS_CONSUMER_KEY')
+        consumer_secret = os.getenv('DISCOGS_CONSUMER_SECRET')
+        oauth_token = os.getenv('DISCOGS_OAUTH_TOKEN')
+        oauth_secret = os.getenv('DISCOGS_OAUTH_TOKEN_SECRET')
+        
+        # If all credentials are present, auto-authenticate and redirect
+        if consumer_key and consumer_secret and oauth_token and oauth_secret:
+            try:
+                # Initialize client with credentials from .env
+                client = DiscogsCollectionClient(
+                    consumer_key=consumer_key,
+                    consumer_secret=consumer_secret,
+                    oauth_token=oauth_token,
+                    oauth_token_secret=oauth_secret
+                )
+                
+                # Authenticate with Discogs API
+                client.authenticate()
+                
+                # Store credentials in session for later use
+                session['consumer_key'] = consumer_key
+                session['consumer_secret'] = consumer_secret
+                session['oauth_token'] = oauth_token
+                session['oauth_secret'] = oauth_secret
+                
+                flash('Successfully authenticated using .env credentials!', 'success')
+                return redirect(url_for('main.folders'))
+                
+            except Exception as e:
+                current_app.logger.error(f"Auto-authentication error: {str(e)}")
+                # If auto-authentication fails, show the authentication form
+                pass
+    
     return render_template('index.html')
 
 @bp.route('/authenticate', methods=['POST'])
@@ -66,6 +108,18 @@ def authenticate():
         session['oauth_token'] = client.oauth_token
         session['oauth_secret'] = client.oauth_token_secret
 
+        # Store credentials in .env file
+        try:
+            # Update or create .env file with credentials
+            set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
+            set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
+            set_key('.env', 'DISCOGS_OAUTH_TOKEN', client.oauth_token)
+            set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', client.oauth_token_secret)
+            
+            current_app.logger.info('Credentials stored in .env file')
+        except Exception as env_error:
+            current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
+
         flash('Successfully authenticated!', 'success')
         return redirect(url_for('main.folders'))
 
@@ -80,17 +134,9 @@ def folders():
     Display collection folders from Discogs
     """
 
-    print(f"folders - request.method: {request.method}")
-
     # Handle POST request when folder is selected
     if request.method == 'POST':
-        
-        # print(f"folders - POST - user: {client.user}")
-        print(f"folders - POST - request folder_id: {request.form.get('folder_id')}")
-
         folder_id = request.form.get('folder_id')
-        
-        print(f"folders - POST - folder_id: {folder_id}")
 
         if folder_id:
             return redirect(url_for('main.releases', folder_id=folder_id))

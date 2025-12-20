@@ -1,6 +1,3 @@
 # Dependencies for Discogs CSV Generator
-csv
-argparse
-os
-typing
 python3-discogs-client
+python-dotenv

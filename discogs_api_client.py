@@ -7,7 +7,7 @@ The class handles both existing OAuth credentials and new OAuth flows when neede
 """
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import discogs_client
 from discogs_client.models import CollectionFolder
@@ -21,7 +21,7 @@ class DiscogsCollectionClient:
     to fetch collection items organized by folders from a user's Discogs account.
     """
 
-    def __init__(self, consumer_key: str, consumer_secret: str, oauth_token: str | None = None, oauth_token_secret: str | None = None) -> None:
+    def __init__(self, consumer_key: str, consumer_secret: str, oauth_token: Optional[str] = None, oauth_token_secret: Optional[str] = None) -> None:
         """
         Initialize the Discogs client with API credentials.
 
@@ -106,6 +106,15 @@ class DiscogsCollectionClient:
                 os.environ['DISCOGS_OAUTH_TOKEN'] = self.oauth_token
                 os.environ['DISCOGS_OAUTH_TOKEN_SECRET'] = self.oauth_token_secret
 
+                # Also persist to .env file if possible
+                try:
+                    from dotenv import set_key
+                    set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
+                    set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
+                except ImportError:
+                    # If dotenv is not available, just set environment variables
+                    pass
+
                 print(" == Request Token == ")
                 print(f"    * oauth_token        = {self.oauth_token}")
                 print(f"    * oauth_token_secret = {self.oauth_token_secret}")
@@ -122,6 +131,19 @@ class DiscogsCollectionClient:
 
                 try:
                     self.oauth_token, self.oauth_token_secret = self.client.get_access_token(oauth_verifier)
+
+                    # Update environment variables with final tokens
+                    os.environ['DISCOGS_OAUTH_TOKEN'] = self.oauth_token
+                    os.environ['DISCOGS_OAUTH_TOKEN_SECRET'] = self.oauth_token_secret
+
+                    # Also persist to .env file if possible
+                    try:
+                        from dotenv import set_key
+                        set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
+                        set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
+                    except ImportError:
+                        # If dotenv is not available, just set environment variables
+                        pass
 
                 except HTTPError as error:
                     raise ConnectionError(f"Unable to authenticate with Discogs API: {error}")
@@ -330,7 +352,7 @@ def main() -> None:
 
         release_id_single = int(input("Please enter a Release ID of the release you want to retrieve the information for: "))
         release_id_single_result = collection.get_release_by_releaseid(release_id_single)
-        print(f"Release ID: {release_id_single_result.get("id", "N/A")} - Release Name: {release_id_single_result.get("artist", "N/A")} - {release_id_single_result.get("title", "N/A")} - URL: {release_id_single_result.get("url", "N/A")}")
+        print(f"Release ID: {release_id_single_result.get('id', 'N/A')} - Release Name: {release_id_single_result.get('artist', 'N/A')} - {release_id_single_result.get('title', 'N/A')} - URL: {release_id_single_result.get('url', 'N/A')}")
 
     else:
         print("User is None")

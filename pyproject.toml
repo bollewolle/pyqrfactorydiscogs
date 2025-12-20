@@ -13,4 +13,5 @@ dependencies = [
     "itsdangerous>=2.1.0",
     "click>=8.0.0",
     "python3-discogs-client>=2.8",
+    "python-dotenv>=1.2.1",
 ]
