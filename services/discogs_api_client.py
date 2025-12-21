@@ -102,10 +102,6 @@ class DiscogsCollectionClient:
                 # Get authorization URL and tokens
                 self.oauth_token, self.oauth_token_secret, url = self.client.get_authorize_url()
 
-                # Add or Update the token and secret in the .env file
-                os.environ['DISCOGS_OAUTH_TOKEN'] = self.oauth_token
-                os.environ['DISCOGS_OAUTH_TOKEN_SECRET'] = self.oauth_token_secret
-
                 # Also persist to .env file if possible
                 try:
                     from dotenv import set_key

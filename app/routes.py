@@ -97,9 +97,11 @@ def authenticate():
             # Update or create .env file with credentials
             set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
             set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
-            set_key('.env', 'DISCOGS_OAUTH_TOKEN', client.oauth_token)
-            set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', client.oauth_token_secret)
-            
+            if client.oauth_token:
+                set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(client.oauth_token))
+            if client.oauth_token_secret:
+                set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(client.oauth_token_secret))
+             
             current_app.logger.info('Credentials stored in .env file')
         except Exception as env_error:
             current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
