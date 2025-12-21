@@ -468,7 +468,6 @@ def generate_editable_csv():
             # Get all fields from form
             for field_name in header:
                 # Convert field name to parameter name
-                param_name = field_name.lower().replace(' ', '_')
                 if field_name == 'Artist':
                     row_data[field_name] = request.form.get(f'artist_{i}', '')
                 elif field_name == 'Title':
@@ -587,8 +586,6 @@ def download_csv():
         return redirect(url_for('main.folders'))
 
     try:
-        processor = DiscogsCollectionProcessor()
-
         # Generate CSV content in memory (as bytes)
         import io
 
