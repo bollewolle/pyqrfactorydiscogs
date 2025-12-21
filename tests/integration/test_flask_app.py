@@ -4,7 +4,6 @@ Integration tests for Flask application.
 Tests the Flask routes and application functionality.
 """
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 

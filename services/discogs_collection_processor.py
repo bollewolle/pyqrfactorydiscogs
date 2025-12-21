@@ -203,7 +203,7 @@ def main() -> None:
     print()
 
     # Generate CSV file
-    template_path = 'qrfactory_discogs_collection_template.csv'
+    template_path = 'templates/qrfactory_discogs_collection_template.csv'
     output_path = 'generated_collection.csv'
 
     processor.generate_collection_csv(extracted_info, template_path, output_path)

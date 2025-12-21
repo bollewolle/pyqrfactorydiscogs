@@ -4,7 +4,6 @@ Integration tests for the complete workflow.
 Tests the end-to-end functionality from authentication to CSV generation.
 """
 
-import pytest
 from unittest.mock import Mock, patch, MagicMock
 from services.discogs_api_client import DiscogsCollectionClient
 from services.discogs_collection_processor import DiscogsCollectionProcessor

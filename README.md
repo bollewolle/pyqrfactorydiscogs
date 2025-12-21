@@ -103,7 +103,8 @@ The application will be available at `http://localhost:5000`
 │       └── preview.html          # CSV preview page
 ├── discogs_api_client.py         # Discogs API client implementation
 ├── discogs_collection_processor.py # CSV generation logic
-├── qrfactory_discogs_collection_template.csv # QR Factory 3 template
+├── templates/                    # Template files
+│   └── qrfactory_discogs_collection_template.csv # QR Factory 3 template
 ├── requirements.txt              # Python dependencies
 ├── test_flask_app.py             # Unit tests
 ├── test_workflow.py              # Integration workflow tests

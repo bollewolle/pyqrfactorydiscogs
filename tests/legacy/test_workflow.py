@@ -71,7 +71,6 @@ def test_workflow():
              {"id": 102, "title": "Album Three", "year": 2022, "artist": "Artist Three", "url": "https://example.com/3"}
          ]):
         folders = client.get_collection_folders()
-        folder_id = folders[0].id
         releases = client.get_collection_releases_by_folder(1)  # Use integer folder ID
         # The mock returns a dict with folder_id as key, get the list of releases
         release_list = next(iter(releases.values())) if isinstance(releases, dict) else releases

@@ -343,7 +343,7 @@ def editable_preview():
         csv_rows = []
         
         # Read template to get the format
-        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+        with open('templates/qrfactory_discogs_collection_template.csv', 'r') as f:
             reader = csv.reader(f)
             header = next(reader)
             template_format = next(reader)
@@ -456,7 +456,7 @@ def generate_editable_csv():
             return redirect(url_for('main.folders'))
         
         # Read template header
-        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+        with open('templates/qrfactory_discogs_collection_template.csv', 'r') as f:
             reader = csv.reader(f)
             header = next(reader)
         
@@ -593,7 +593,7 @@ def download_csv():
         csv_buffer = io.StringIO()
 
         # Add header from template
-        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+        with open('templates/qrfactory_discogs_collection_template.csv', 'r') as f:
             reader = csv.reader(f)
             header = next(reader)
 

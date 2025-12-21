@@ -87,8 +87,8 @@ def test_csv_format():
     print("\nTesting CSV format...")
 
     # Read template file
-    if os.path.exists('qrfactory_discogs_collection_template.csv'):
-        with open('qrfactory_discogs_collection_template.csv', 'r') as f:
+    if os.path.exists('templates/qrfactory_discogs_collection_template.csv'):
+        with open('templates/qrfactory_discogs_collection_template.csv', 'r') as f:
             content = f.read()
 
         # Check for template placeholders
@@ -103,7 +103,6 @@ def test_data_flow():
     """Test complete data flow from Discogs API to CSV"""
     print("\nTesting complete data flow...")
 
-    from services.discogs_api_client import DiscogsCollectionClient
     from services.discogs_collection_processor import DiscogsCollectionProcessor
 
     # Mock release data structure as returned by API client
