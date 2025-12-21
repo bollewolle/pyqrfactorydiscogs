@@ -4,7 +4,7 @@ Test script to verify Discogs API authentication flow
 """
 
 import os
-from discogs_api_client import DiscogsCollectionClient
+from services.discogs_api_client import DiscogsCollectionClient
 
 # Get credentials from environment
 consumer_key = os.getenv("DISCOGS_CONSUMER_KEY", "").strip()

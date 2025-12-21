@@ -11,8 +11,8 @@ from unittest.mock import Mock, patch
 # Add the project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from discogs_api_client import DiscogsCollectionClient
-from discogs_collection_processor import DiscogsCollectionProcessor
+from services.discogs_api_client import DiscogsCollectionClient
+from services.discogs_collection_processor import DiscogsCollectionProcessor
 
 def test_workflow():
     """Test the complete workflow from authentication to CSV generation"""

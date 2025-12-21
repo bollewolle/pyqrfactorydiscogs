@@ -13,8 +13,8 @@ from datetime import datetime
 from dotenv import load_dotenv, set_key
 
 # Import local modules
-from discogs_api_client import DiscogsCollectionClient
-from discogs_collection_processor import DiscogsCollectionProcessor
+from services.discogs_api_client import DiscogsCollectionClient
+from services.discogs_collection_processor import DiscogsCollectionProcessor
 
 bp = Blueprint('main', __name__)
 

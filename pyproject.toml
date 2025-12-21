@@ -1,11 +1,20 @@
 [project]
 name = "pyqrfactorydiscogs"
 version = "0.0.1"
-description = "Generate CSV for QR Factory 3 from a Discogs collection"
+description = "Generate CSV for a Discogs collection for mass QR code creation in QR Factory 3"
 authors = [
     {name = "Bram", email = "dev@bollewolle.be"}
 ]
+readme = "README.md"
 requires-python = ">=3.14"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+
 dependencies = [
     "Flask>=3.0.0",
     "Werkzeug>=3.0.0",
@@ -14,4 +23,12 @@ dependencies = [
     "click>=8.0.0",
     "python3-discogs-client>=2.8",
     "python-dotenv>=1.2.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.1.0",
+    "pytest-flask>=1.2.0",
 ]

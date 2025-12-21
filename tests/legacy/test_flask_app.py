@@ -14,7 +14,7 @@ def test_discogs_api_client():
     """Test DiscogsCollectionClient initialization and basic functionality"""
     print("Testing DiscogsCollectionClient...")
 
-    from discogs_api_client import DiscogsCollectionClient
+    from services.discogs_api_client import DiscogsCollectionClient
 
     # Test initialization with valid credentials
     client = DiscogsCollectionClient(
@@ -32,7 +32,7 @@ def test_discogs_collection_processor():
     """Test DiscogsCollectionProcessor functionality"""
     print("\nTesting DiscogsCollectionProcessor...")
 
-    from discogs_collection_processor import DiscogsCollectionProcessor
+    from services.discogs_collection_processor import DiscogsCollectionProcessor
 
     processor = DiscogsCollectionProcessor()
 
@@ -103,8 +103,8 @@ def test_data_flow():
     """Test complete data flow from Discogs API to CSV"""
     print("\nTesting complete data flow...")
 
-    from discogs_api_client import DiscogsCollectionClient
-    from discogs_collection_processor import DiscogsCollectionProcessor
+    from services.discogs_api_client import DiscogsCollectionClient
+    from services.discogs_collection_processor import DiscogsCollectionProcessor
 
     # Mock release data structure as returned by API client
     mock_releases = {
