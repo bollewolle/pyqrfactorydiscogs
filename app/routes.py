@@ -16,6 +16,8 @@ from dotenv import load_dotenv, set_key
 from services.discogs_api_client import DiscogsCollectionClient
 from services.discogs_collection_processor import DiscogsCollectionProcessor
 
+USERAGENT = os.getenv("USERAGENT", "pyqrfactorydiscogs/1.0")
+
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
@@ -38,6 +40,7 @@ def index():
                 client = DiscogsCollectionClient(
                     consumer_key=consumer_key,
                     consumer_secret=consumer_secret,
+                    useragent=USERAGENT,
                     oauth_token=oauth_token,
                     oauth_token_secret=oauth_secret
                 )
@@ -77,7 +80,8 @@ def authenticate():
         # Initialize client with credentials from form
         client = DiscogsCollectionClient(
             consumer_key=consumer_key,
-            consumer_secret=consumer_secret
+            consumer_secret=consumer_secret,
+            useragent=USERAGENT
         )
 
         # Authenticate with Discogs API (method doesn't return value, sets client attributes)
@@ -137,6 +141,7 @@ def folders():
         client = DiscogsCollectionClient(
             consumer_key=session.get('consumer_key', ''),
             consumer_secret=session.get('consumer_secret', ''),
+            useragent=USERAGENT,
             oauth_token=session.get('oauth_token', ''),
             oauth_token_secret=session.get('oauth_secret', '')
         )
@@ -185,6 +190,7 @@ def releases(folder_id):
         client = DiscogsCollectionClient(
             consumer_key=session.get('consumer_key', ''),
             consumer_secret=session.get('consumer_secret', ''),
+            useragent=USERAGENT,
             oauth_token=session.get('oauth_token', ''),
             oauth_token_secret=session.get('oauth_secret', '')
         )
@@ -258,6 +264,7 @@ def preview_csv():
         client = DiscogsCollectionClient(
             consumer_key=session.get('consumer_key', ''),
             consumer_secret=session.get('consumer_secret', ''),
+            useragent=USERAGENT,
             oauth_token=session.get('oauth_token', ''),
             oauth_token_secret=session.get('oauth_secret', '')
         )

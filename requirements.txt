@@ -1,6 +1,7 @@
 # Dependencies for Discogs CSV Generator
 python3-discogs-client
 python-dotenv
+requests-oauthlib==2.0.0
 
 # Testing dependencies
 pytest>=8.0.0

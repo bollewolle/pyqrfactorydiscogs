@@ -25,6 +25,10 @@ echo "Virtual Environment: $VIRTUAL_ENV"
 description = "runs the script you pass on."
 run = "python {{arg(name='script')}}"
 
+[tasks.flask_debug ]
+description = "runs Flask app with debug turned on"
+run = "uv run flask --app app run --debug"
+
 [settings]
 python.uv_venv_auto = true
 pipx.uvx = true

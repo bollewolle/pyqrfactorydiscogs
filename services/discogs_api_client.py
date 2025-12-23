@@ -8,10 +8,17 @@ The class handles both existing OAuth credentials and new OAuth flows when neede
 
 import os
 from typing import Dict, List, Optional
+import logging
 
 import discogs_client
 from discogs_client.models import CollectionFolder
 from discogs_client.exceptions import HTTPError, DiscogsAPIError
+
+from dotenv import load_dotenv, set_key, get_key
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5000")
+
+logger = logging.getLogger(__name__)
 
 class DiscogsCollectionClient:
     """
@@ -21,13 +28,14 @@ class DiscogsCollectionClient:
     to fetch collection items organized by folders from a user's Discogs account.
     """
 
-    def __init__(self, consumer_key: str, consumer_secret: str, oauth_token: Optional[str] = None, oauth_token_secret: Optional[str] = None) -> None:
+    def __init__(self, consumer_key: str, consumer_secret: str, useragent: str, oauth_token: Optional[str] = None, oauth_token_secret: Optional[str] = None) -> None:
         """
         Initialize the Discogs client with API credentials.
 
         Args:
             consumer_key (str): The OAuth consumer key for authentication
             consumer_secret (str): The OAuth consumer secret for authentication
+            useragent (str): The useragent to pass onto Discogs
             oauth_token (str, optional): The OAuth access token. Defaults to None.
             oauth_token_secret (str, optional): The OAuth access token secret. Defaults to None.
 
@@ -44,6 +52,7 @@ class DiscogsCollectionClient:
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
+        self.useragent = useragent
         self.oauth_token = oauth_token
         self.oauth_token_secret = oauth_token_secret
         self.client = None
@@ -55,7 +64,7 @@ class DiscogsCollectionClient:
 
         This method uses OAuth credentials passed during initialization.
         If no OAuth tokens were provided, it retrieves them from environment variables,
-        and if still not found, initiates an interactive OAuth flow (for CLI usage only).
+        and if still not found, initiates an automatic OAuth flow without manual intervention.
 
         Returns:
             None: Sets up client authentication
@@ -65,28 +74,37 @@ class DiscogsCollectionClient:
             ValueError: If consumer credentials are not set or invalid
         """
         try:
-            # Use tokens from initialization if provided
-            oauth_token = self.oauth_token.strip() if self.oauth_token else ""
-            oauth_token_secret = self.oauth_token_secret.strip() if self.oauth_token_secret else ""
+            # Load existing .env file
+            load_dotenv()
 
-            # If no tokens were passed during init, check environment variables
-            if not oauth_token or not oauth_token_secret:
-                oauth_token = os.getenv("DISCOGS_OAUTH_TOKEN", "").strip()
-                oauth_token_secret = os.getenv("DISCOGS_OAUTH_TOKEN_SECRET", "").strip()
-
-            # When tokens exist, create a Client instance with them
-            if oauth_token and oauth_token_secret:
-                self.oauth_token = oauth_token
-                self.oauth_token_secret = oauth_token_secret
-
-                # Instantiating the Client class with the consumer key and secret
+            # Check if OAuth tokens were provided during initialization
+            if self.oauth_token and self.oauth_token_secret:
+                # Use the tokens provided during initialization
                 self.client = discogs_client.Client(
-                    'pyqrfactorydiscogs/1.0',
                     consumer_key=self.consumer_key,
                     consumer_secret=self.consumer_secret,
+                    user_agent=self.useragent,
                     token=self.oauth_token,
                     secret=self.oauth_token_secret
                 )
+            else:
+                # If no tokens were passed during init, check environment variables
+                current_oauth_token = os.getenv("DISCOGS_OAUTH_TOKEN", "").strip()
+                current_oauth_token_secret = os.getenv("DISCOGS_OAUTH_TOKEN_SECRET", "").strip()
+
+                # When tokens exist in environment, create a Client instance with them
+                if current_oauth_token and current_oauth_token_secret:
+                    self.oauth_token = current_oauth_token
+                    self.oauth_token_secret = current_oauth_token_secret
+
+                    # Instantiating the Client class with the consumer key and secret
+                    self.client = discogs_client.Client(
+                        consumer_key=self.consumer_key,
+                        consumer_secret=self.consumer_secret,
+                        user_agent=self.useragent,
+                        token=self.oauth_token,
+                        secret=self.oauth_token_secret
+                    )
 
             # When there are no OAuth credentials, connect to Discogs API and ask to create them (CLI only)
             if not self.oauth_token or not self.oauth_token_secret:
@@ -94,9 +112,9 @@ class DiscogsCollectionClient:
 
                 # Instantiating the Client class with the consumer key and secret
                 self.client = discogs_client.Client(
-                    'pyqrfactorydiscogs/1.0',
                     consumer_key=self.consumer_key,
-                    consumer_secret=self.consumer_secret
+                    consumer_secret=self.consumer_secret,
+                    user_agent=self.useragent
                 )
 
                 # Get authorization URL and tokens
@@ -280,6 +298,8 @@ class DiscogsCollectionClient:
         except (AttributeError, IndexError) as error:
             raise ValueError(f"Invalid release data format for release {release_id}: {error}")
 
+
+
 def main() -> None:
     """
     Example usage demonstrating Discogs API OAuth authentication and collection data retrieval.
@@ -301,7 +321,11 @@ def main() -> None:
         raise ValueError("Discogs API credentials must be set in environment variables")
 
     # Create an instance
-    collection = DiscogsCollectionClient(consumer_key, consumer_secret)
+    collection = DiscogsCollectionClient(
+        consumer_key=consumer_key, 
+        consumer_secret=consumer_secret, 
+        useragent="pyqrfactorydiscogs/1.0"
+    )
 
     # Authenticate with Discogs API
     collection.authenticate()

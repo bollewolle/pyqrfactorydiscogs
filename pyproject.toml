@@ -23,6 +23,7 @@ dependencies = [
     "click>=8.0.0",
     "python3-discogs-client>=2.8",
     "python-dotenv>=1.2.1",
+    "requests-oauthlib==2.0.0",
 ]
 
 [project.optional-dependencies]
