@@ -16,7 +16,7 @@ from discogs_client.exceptions import HTTPError, DiscogsAPIError
 
 from dotenv import load_dotenv, set_key, get_key
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
 DOTENV_PATH = "../.env"
 
 logger = logging.getLogger(__name__)
