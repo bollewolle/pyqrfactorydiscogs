@@ -38,7 +38,7 @@
                     <td>{{ release.artist }}</td>
                     <td>{{ release.year }}</td>
                     <td>{% if release.format %}{{ release.format[0].name }}{% endif %}</td>
-                    <td>N/A</td>
+                    <td>{{ release.date_added }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

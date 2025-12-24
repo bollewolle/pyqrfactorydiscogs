@@ -329,7 +329,8 @@ class DiscogsCollectionClient:
                     'year': r.release.year,
                     'format': r.release.formats,
                     'label': r.release.labels[0].name if r.release.labels else None,
-                    'url': r.release.url.split('-', 1)[0]
+                    'url': r.release.url.split('-', 1)[0],
+                    'date_added': r.date_added
                 })
 
             # Convert list to dictionary format as expected by type annotation
