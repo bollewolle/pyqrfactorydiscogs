@@ -10,6 +10,9 @@ import os
 from services.discogs_api_client import DiscogsCollectionClient
 from dotenv import load_dotenv, set_key
 
+USERAGENT = os.getenv("USERAGENT", "pyqrfactorydiscogs/1.0")
+DOTENV_PATH = ".env"
+
 def main():
     print("=== Discogs OAuth Token Generator ===")
     print()
@@ -59,7 +62,8 @@ def proceed_with_auth(consumer_key, consumer_secret):
         # Create client and authenticate
         client = DiscogsCollectionClient(
             consumer_key=consumer_key,
-            consumer_secret=consumer_secret
+            consumer_secret=consumer_secret,
+            useragent=USERAGENT
         )
         
         print("Attempting to authenticate with Discogs API...")
@@ -80,7 +84,7 @@ def proceed_with_auth(consumer_key, consumer_secret):
                 print("  flask run --debug")
             except Exception as e:
                 print(f"\nWarning: Could not save OAuth tokens to .env file: {e}")
-                print(f"\nPlease manually add these to your .env file:")
+                print("\nPlease manually add these to your .env file:")
                 print(f"DISCOGS_OAUTH_TOKEN={client.oauth_token}")
                 print(f"DISCOGS_OAUTH_TOKEN_SECRET={client.oauth_token_secret}")
         
