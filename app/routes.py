@@ -10,13 +10,14 @@ import os
 import csv
 import io
 from datetime import datetime
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv, set_key, get_key
 
 # Import local modules
 from services.discogs_api_client import DiscogsCollectionClient
 from services.discogs_collection_processor import DiscogsCollectionProcessor
 
 USERAGENT = os.getenv("USERAGENT", "pyqrfactorydiscogs/1.0")
+DOTENV_PATH = ".env"
 
 bp = Blueprint('main', __name__)
 
@@ -25,7 +26,7 @@ def index():
     """Main page with authentication form or auto-authentication if .env exists"""
     # Check if .env file exists and has all required credentials
     if os.path.exists('.env'):
-        load_dotenv()
+        load_dotenv(DOTENV_PATH)
         
         # Get credentials from environment
         consumer_key = os.getenv('DISCOGS_CONSUMER_KEY')
@@ -84,9 +85,35 @@ def authenticate():
             useragent=USERAGENT
         )
 
-        # Authenticate with Discogs API (method doesn't return value, sets client attributes)
-        client.authenticate()
+        # Check if OAuth tokens exist in .env file
+        existing_oauth_token = get_key('.env', 'DISCOGS_OAUTH_TOKEN') or ''
+        existing_oauth_secret = get_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET') or ''
+        existing_oauth_token = existing_oauth_token.strip()
+        existing_oauth_secret = existing_oauth_secret.strip()
 
+        if existing_oauth_token and existing_oauth_secret:
+            # Use existing tokens if available
+            client.oauth_token = existing_oauth_token
+            client.oauth_token_secret = existing_oauth_secret
+            client.authenticate()
+        else:
+            # Start web-based OAuth flow
+            # Store consumer credentials in session for callback
+            session['consumer_key'] = consumer_key
+            session['consumer_secret'] = consumer_secret
+
+            # Generate callback URL
+            callback_url = url_for('main.oauth_callback', _external=True)
+
+            # Get authorization URL with callback
+            request_token, request_token_secret, authorize_url = client.get_authorize_url_with_callback(callback_url)
+
+            # Store request tokens in session for callback
+            session['request_token'] = request_token
+            session['request_token_secret'] = request_token_secret
+
+            # Redirect user to Discogs authorization page
+            return redirect(authorize_url)
 
         # Store credentials in session for later use
         session['consumer_key'] = consumer_key
@@ -105,7 +132,7 @@ def authenticate():
                 set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(client.oauth_token))
             if client.oauth_token_secret:
                 set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(client.oauth_token_secret))
-             
+            
             current_app.logger.info('Credentials stored in .env file')
         except Exception as env_error:
             current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
@@ -117,6 +144,66 @@ def authenticate():
         current_app.logger.error(f"Authentication error: {str(e)}")
         flash('An error occurred during authentication', 'error')
         return redirect(url_for('main.index'))
+
+@bp.route('/oauth-callback')
+def oauth_callback():
+    """
+    Handle OAuth callback from Discogs after user authorization
+    """
+    try:
+        # Get OAuth verifier from query parameters
+        oauth_verifier = request.args.get('oauth_verifier')
+        oauth_token = request.args.get('oauth_token')
+
+        if not oauth_verifier or not oauth_token:
+            error_message = 'Invalid OAuth callback - missing verifier or token'
+            current_app.logger.error(error_message)
+            return render_template('oauth_callback.html', success=False, error_message=error_message)
+
+        # Retrieve consumer credentials and request tokens from session
+        consumer_key = session.get('consumer_key')
+        consumer_secret = session.get('consumer_secret')
+        request_token = session.get('request_token')
+        request_token_secret = session.get('request_token_secret')
+
+        if not all([consumer_key, consumer_secret, request_token, request_token_secret]):
+            error_message = 'Session expired - please start authentication again'
+            current_app.logger.error(error_message)
+            return render_template('oauth_callback.html', success=False, error_message=error_message)
+
+        # Initialize client with consumer credentials
+        client = DiscogsCollectionClient(
+            consumer_key=consumer_key,
+            consumer_secret=consumer_secret,
+            useragent=USERAGENT,
+            oauth_token=request_token,
+            oauth_token_secret=request_token_secret
+        )
+
+        # Complete OAuth flow
+        access_token, access_token_secret = client.complete_oauth(oauth_verifier)
+
+        # Store tokens in session
+        session['oauth_token'] = access_token
+        session['oauth_secret'] = access_token_secret
+
+        # Store credentials in .env file
+        try:
+            set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
+            set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
+            set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(access_token))
+            set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(access_token_secret))
+            current_app.logger.info('OAuth credentials stored in .env file')
+        except Exception as env_error:
+            current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
+
+        # Show success page and then redirect
+        return render_template('oauth_callback.html', success=True)
+
+    except Exception as e:
+        current_app.logger.error(f"OAuth callback error: {str(e)}")
+        error_message = f'An error occurred during OAuth callback: {str(e)}'
+        return render_template('oauth_callback.html', success=False, error_message=error_message)
 
 @bp.route('/folders', methods=['GET', 'POST'])
 def folders():

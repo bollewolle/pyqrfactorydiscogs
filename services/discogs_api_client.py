@@ -17,6 +17,7 @@ from discogs_client.exceptions import HTTPError, DiscogsAPIError
 from dotenv import load_dotenv, set_key, get_key
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5000")
+DOTENV_PATH = "../.env"
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class DiscogsCollectionClient:
         """
         try:
             # Load existing .env file
-            load_dotenv()
+            load_dotenv(DOTENV_PATH)
 
             # Check if OAuth tokens were provided during initialization
             if self.oauth_token and self.oauth_token_secret:
@@ -174,6 +175,88 @@ class DiscogsCollectionClient:
         except Exception as error:
             raise ConnectionError(f"Failed to authenticate with Discogs API: {error}")
 
+    def get_authorize_url_with_callback(self, callback_url: str) -> tuple:
+        """
+        Get authorization URL with callback for web-based OAuth flow.
+
+        This method initiates the OAuth flow and returns the authorization URL
+        along with request token and secret that should be stored temporarily.
+
+        Args:
+            callback_url (str): The callback URL to redirect to after authorization
+
+        Returns:
+            tuple: (request_token, request_token_secret, authorize_url)
+
+        Raises:
+            ConnectionError: If unable to get authorization URL
+            ValueError: If consumer credentials are not set or invalid
+        """
+        if not self.consumer_key or not self.consumer_secret:
+            raise ValueError("Consumer key and secret must be set")
+
+        try:
+            # Create client without OAuth tokens for initial authorization
+            self.client = discogs_client.Client(
+                consumer_key=self.consumer_key,
+                consumer_secret=self.consumer_secret,
+                user_agent=self.useragent
+            )
+
+            # Get authorization URL with callback
+            request_token, request_token_secret, authorize_url = self.client.get_authorize_url(callback_url=callback_url)
+
+            # Store request tokens temporarily
+            self.oauth_token = request_token
+            self.oauth_token_secret = request_token_secret
+
+            return request_token, request_token_secret, authorize_url
+
+        except Exception as error:
+            raise ConnectionError(f"Failed to get authorization URL: {error}")
+
+    def complete_oauth(self, oauth_verifier: str) -> tuple:
+        """
+        Complete the OAuth flow by exchanging verifier for access tokens.
+
+        Args:
+            oauth_verifier (str): The OAuth verifier received from Discogs callback
+
+        Returns:
+            tuple: (access_token, access_token_secret)
+
+        Raises:
+            ConnectionError: If unable to complete OAuth flow
+            ValueError: If required tokens are missing
+        """
+        if not self.oauth_token or not self.oauth_token_secret:
+            raise ValueError("Request token and secret must be set before completing OAuth")
+
+        try:
+            # Ensure client is initialized with request tokens
+            if self.client is None:
+                self.client = discogs_client.Client(
+                    consumer_key=self.consumer_key,
+                    consumer_secret=self.consumer_secret,
+                    user_agent=self.useragent,
+                    token=self.oauth_token,
+                    secret=self.oauth_token_secret
+                )
+
+            # Exchange verifier for access tokens
+            access_token, access_token_secret = self.client.get_access_token(oauth_verifier)
+
+            # Update tokens
+            self.oauth_token = access_token
+            self.oauth_token_secret = access_token_secret
+
+            # Get user identity
+            self.user = self.client.identity()
+
+            return access_token, access_token_secret
+
+        except Exception as error:
+            raise ConnectionError(f"Failed to complete OAuth: {error}")
 
     def get_collection_folders(self) -> List[CollectionFolder]:
         """
@@ -299,7 +382,6 @@ class DiscogsCollectionClient:
             raise ValueError(f"Invalid release data format for release {release_id}: {error}")
 
 
-
 def main() -> None:
     """
     Example usage demonstrating Discogs API OAuth authentication and collection data retrieval.
@@ -380,10 +462,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-
-
- 
-
-

@@ -228,3 +228,132 @@ class TestDiscogsCollectionClient:
         assert result['artist'] == "Artist One"
         # The URL is processed by split('-', 1)[0] in the actual code
         assert result['url'] == "https://www.discogs.com/release/100"
+
+    def test_get_authorize_url_with_callback_validation(self):
+        """Test validation in get_authorize_url_with_callback method"""
+        client = DiscogsCollectionClient(
+            consumer_key="",
+            consumer_secret=""
+        )
+        
+        # Should raise ValueError when credentials are not set
+        with pytest.raises(ValueError, match="Consumer key and secret must be set"):
+            client.get_authorize_url_with_callback("http://callback.url")
+
+    @patch('discogs_api_client.discogs_client.Client')
+    def test_get_authorize_url_with_callback_success(self, mock_client_class):
+        """Test successful get_authorize_url_with_callback method"""
+        client = DiscogsCollectionClient(
+            consumer_key="test_key",
+            consumer_secret="test_secret"
+        )
+        
+        # Mock the client
+        mock_client = MagicMock()
+        mock_client.get_authorize_url.return_value = (
+            "request_token",
+            "request_token_secret",
+            "https://www.discogs.com/oauth/authorize?oauth_token=request_token"
+        )
+        mock_client_class.return_value = mock_client
+        
+        # Call method
+        callback_url = "http://localhost:5000/oauth-callback"
+        request_token, request_token_secret, authorize_url = client.get_authorize_url_with_callback(callback_url)
+        
+        # Verify results
+        assert request_token == "request_token"
+        assert request_token_secret == "request_token_secret"
+        assert authorize_url == "https://www.discogs.com/oauth/authorize?oauth_token=request_token"
+        assert client.oauth_token == "request_token"
+        assert client.oauth_token_secret == "request_token_secret"
+        
+        # Verify client was created with correct parameters
+        mock_client_class.assert_called_once_with(
+            consumer_key="test_key",
+            consumer_secret="test_secret",
+            user_agent="pyqrfactorydiscogs/1.0"
+        )
+        
+        # Verify get_authorize_url was called with callback
+        mock_client.get_authorize_url.assert_called_once_with(callback_url=callback_url)
+
+    def test_complete_oauth_validation(self):
+        """Test validation in complete_oauth method"""
+        client = DiscogsCollectionClient(
+            consumer_key="test_key",
+            consumer_secret="test_secret"
+        )
+        
+        # Should raise ValueError when request tokens are not set
+        with pytest.raises(ValueError, match="Request token and secret must be set before completing OAuth"):
+            client.complete_oauth("verifier_code")
+
+    @patch('discogs_api_client.discogs_client.Client')
+    def test_complete_oauth_success(self, mock_client_class):
+        """Test successful complete_oauth method"""
+        client = DiscogsCollectionClient(
+            consumer_key="test_key",
+            consumer_secret="test_secret",
+            oauth_token="request_token",
+            oauth_token_secret="request_token_secret"
+        )
+        
+        # Mock the client
+        mock_client = MagicMock()
+        mock_client.get_access_token.return_value = ("access_token", "access_token_secret")
+        mock_client_class.return_value = mock_client
+        
+        # Mock identity
+        mock_identity = Mock()
+        mock_identity.username = "test_user"
+        mock_client.identity.return_value = mock_identity
+        
+        # Call method
+        access_token, access_token_secret = client.complete_oauth("verifier_code")
+        
+        # Verify results
+        assert access_token == "access_token"
+        assert access_token_secret == "access_token_secret"
+        assert client.oauth_token == "access_token"
+        assert client.oauth_token_secret == "access_token_secret"
+        assert client.user == mock_identity
+        
+        # Verify get_access_token was called with verifier
+        mock_client.get_access_token.assert_called_once_with("verifier_code")
+        
+        # Verify identity was retrieved
+        mock_client.identity.assert_called_once()
+
+    @patch('discogs_api_client.discogs_client.Client')
+    def test_complete_oauth_client_initialization(self, mock_client_class):
+        """Test client initialization in complete_oauth when client is None"""
+        client = DiscogsCollectionClient(
+            consumer_key="test_key",
+            consumer_secret="test_secret",
+            oauth_token="request_token",
+            oauth_token_secret="request_token_secret"
+        )
+        client.client = None  # Simulate client not being initialized
+        
+        # Mock the client
+        mock_client = MagicMock()
+        mock_client.get_access_token.return_value = ("access_token", "access_token_secret")
+        mock_client_class.return_value = mock_client
+        
+        # Mock identity
+        mock_identity = Mock()
+        mock_identity.username = "test_user"
+        mock_client.identity.return_value = mock_identity
+        
+        # Call method
+        access_token, access_token_secret = client.complete_oauth("verifier_code")
+        
+        # Verify client was initialized
+        mock_client_class.assert_called_once_with(
+            consumer_key="test_key",
+            consumer_secret="test_secret",
+            user_agent="pyqrfactorydiscogs/1.0"
+        )
+        
+        assert client.client == mock_client

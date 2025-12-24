@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block content %}
+<h1>Discogs OAuth Authorization</h1>
+
+<div class="oauth-container">
+  {% if success %}
+  <div class="success-message">
+    <h2>✓ Authentication Successful!</h2>
+    <p>
+      You have successfully authenticated with Discogs. You will be redirected
+      to your collection shortly.
+    </p>
+  </div>
+
+  <script>
+    // Auto-redirect after successful authentication
+    setTimeout(function () {
+      window.location.href = "{{ url_for('main.folders') }}";
+    }, 3000);
+  </script>
+
+  {% else %}
+  <div class="error-message">
+    <h2>✗ Authentication Failed</h2>
+    <p>There was an error during the OAuth authentication process.</p>
+
+    {% if error_message %}
+    <div class="error-details"><strong>Error:</strong> {{ error_message }}</div>
+    {% endif %}
+
+    <p>Please <a href="{{ url_for('main.index') }}">try again</a>.</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .oauth-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .success-message {
+    color: #28a745;
+    padding: 20px;
+  }
+
+  .error-message {
+    color: #dc3545;
+    padding: 20px;
+  }
+
+  .error-details {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 20px 0;
+    border: 1px solid #f5c6cb;
+  }
+
+  .success-message h2,
+  .error-message h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .success-message p,
+  .error-message p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
