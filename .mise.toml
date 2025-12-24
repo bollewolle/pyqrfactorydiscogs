@@ -29,6 +29,15 @@ run = "python {{arg(name='script')}}"
 description = "runs Flask app with debug turned on"
 run = "uv run flask --app app run --debug"
 
+[tasks.test]
+description = "Run tests"
+alias = "t"
+run = "uv run pytest"
+
+[tasks.test-cov]
+description = "Run tests with coverage"
+run = "uv run pytest --cov"
+
 [settings]
 python.uv_venv_auto = true
 pipx.uvx = true

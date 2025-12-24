@@ -19,7 +19,8 @@ def test_discogs_api_client():
     # Test initialization with valid credentials
     client = DiscogsCollectionClient(
         consumer_key="test_consumer_key",
-        consumer_secret="test_consumer_secret"
+        consumer_secret="test_consumer_secret",
+        useragent="pyqrfactorydiscogs/1.0"
     )
 
     assert client.consumer_key == "test_consumer_key"

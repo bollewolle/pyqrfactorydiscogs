@@ -16,11 +16,13 @@ class TestDiscogsCollectionClient:
         """Test client initialization with valid credentials"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         assert client.consumer_key == "test_key"
         assert client.consumer_secret == "test_secret"
+        assert client.useragent == "pyqrfactorydiscogs/1.0"
         assert client.oauth_token is None
         assert client.oauth_token_secret is None
         assert client.client is None
@@ -31,6 +33,7 @@ class TestDiscogsCollectionClient:
         client = DiscogsCollectionClient(
             consumer_key="test_key",
             consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0",
             oauth_token="test_token",
             oauth_token_secret="test_token_secret"
         )
@@ -41,13 +44,13 @@ class TestDiscogsCollectionClient:
     def test_initialization_invalid_credentials(self):
         """Test client initialization with invalid credential types"""
         with pytest.raises(ValueError):
-            DiscogsCollectionClient(123, "test_secret")
+            DiscogsCollectionClient(123, "test_secret", "useragent")
         
         with pytest.raises(ValueError):
-            DiscogsCollectionClient("test_key", 456)
+            DiscogsCollectionClient("test_key", 456, "useragent")
 
-    @patch('discogs_api_client.os.getenv')
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.os.getenv')
+    @patch('services.discogs_api_client.discogs_client.Client')
     def test_authenticate_with_tokens(self, mock_client_class, mock_getenv):
         """Test authentication when OAuth tokens are provided"""
         # Setup mock environment variables
@@ -58,7 +61,8 @@ class TestDiscogsCollectionClient:
         
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Mock the client and identity
@@ -73,17 +77,17 @@ class TestDiscogsCollectionClient:
         
         # Verify client was created with correct parameters
         mock_client_class.assert_called_once_with(
-            'pyqrfactorydiscogs/1.0',
             consumer_key='test_key',
             consumer_secret='test_secret',
+            user_agent='pyqrfactorydiscogs/1.0',
             token='env_token',
             secret='env_token_secret'
         )
         
         assert client.user == mock_identity
 
-    @patch('discogs_api_client.os.getenv')
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.os.getenv')
+    @patch('services.discogs_api_client.discogs_client.Client')
     @patch('builtins.input')
     def test_authenticate_interactive_flow(self, mock_input, mock_client_class, mock_getenv):
         """Test authentication with interactive OAuth flow"""
@@ -92,7 +96,8 @@ class TestDiscogsCollectionClient:
         
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Mock the client
@@ -124,7 +129,8 @@ class TestDiscogsCollectionClient:
         """Test folder retrieval when not authenticated"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Should return empty list when user is None
@@ -136,7 +142,8 @@ class TestDiscogsCollectionClient:
         """Test release retrieval by folder"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Mock the user and folder structure
@@ -190,12 +197,13 @@ class TestDiscogsCollectionClient:
         assert result[1]['title'] == "Album Two"
         assert result[1]['artist'] == "Artist Two"
 
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.discogs_client.Client')
     def test_get_release_by_releaseid(self, mock_client_class):
         """Test retrieving a single release by ID"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Mock the client
@@ -233,19 +241,21 @@ class TestDiscogsCollectionClient:
         """Test validation in get_authorize_url_with_callback method"""
         client = DiscogsCollectionClient(
             consumer_key="",
-            consumer_secret=""
+            consumer_secret="",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Should raise ValueError when credentials are not set
         with pytest.raises(ValueError, match="Consumer key and secret must be set"):
             client.get_authorize_url_with_callback("http://callback.url")
 
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.discogs_client.Client')
     def test_get_authorize_url_with_callback_success(self, mock_client_class):
         """Test successful get_authorize_url_with_callback method"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Mock the client
@@ -282,19 +292,21 @@ class TestDiscogsCollectionClient:
         """Test validation in complete_oauth method"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
-            consumer_secret="test_secret"
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
         )
         
         # Should raise ValueError when request tokens are not set
         with pytest.raises(ValueError, match="Request token and secret must be set before completing OAuth"):
             client.complete_oauth("verifier_code")
 
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.discogs_client.Client')
     def test_complete_oauth_success(self, mock_client_class):
         """Test successful complete_oauth method"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
             consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0",
             oauth_token="request_token",
             oauth_token_secret="request_token_secret"
         )
@@ -325,12 +337,13 @@ class TestDiscogsCollectionClient:
         # Verify identity was retrieved
         mock_client.identity.assert_called_once()
 
-    @patch('discogs_api_client.discogs_client.Client')
+    @patch('services.discogs_api_client.discogs_client.Client')
     def test_complete_oauth_client_initialization(self, mock_client_class):
         """Test client initialization in complete_oauth when client is None"""
         client = DiscogsCollectionClient(
             consumer_key="test_key",
             consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0",
             oauth_token="request_token",
             oauth_token_secret="request_token_secret"
         )
@@ -353,7 +366,9 @@ class TestDiscogsCollectionClient:
         mock_client_class.assert_called_once_with(
             consumer_key="test_key",
             consumer_secret="test_secret",
-            user_agent="pyqrfactorydiscogs/1.0"
+            user_agent="pyqrfactorydiscogs/1.0",
+            token='request_token',
+            secret='request_token_secret'
         )
         
         assert client.client == mock_client

@@ -14,12 +14,12 @@ class TestCompleteWorkflow:
 
     def test_authentication_step(self):
         """Test the authentication step of the workflow"""
-        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test")
+        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test", useragent="pyqrfactorydiscogs/1.0")
         assert hasattr(client, 'authenticate'), "Client should have authenticate method"
 
     def test_folder_retrieval_step(self):
         """Test the folder retrieval step of the workflow"""
-        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test")
+        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test", useragent="pyqrfactorydiscogs/1.0")
         
         mock_folders = [
             Mock(id=1, name="Favorites"),
@@ -33,7 +33,7 @@ class TestCompleteWorkflow:
 
     def test_release_retrieval_step(self):
         """Test the release retrieval step of the workflow"""
-        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test")
+        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test", useragent="pyqrfactorydiscogs/1.0")
         
         mock_releases = [
             Mock(id=100, title="Album One", year=2020),
@@ -59,7 +59,7 @@ class TestCompleteWorkflow:
 
     def test_complete_data_flow(self):
         """Test the complete data flow from authentication to CSV generation"""
-        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test")
+        client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test", useragent="pyqrfactorydiscogs/1.0")
         processor = DiscogsCollectionProcessor()
         
         mock_folders = [
@@ -104,8 +104,8 @@ class TestCompleteWorkflow:
 
     def test_workflow_with_mock_authentication(self):
         """Test complete workflow with mocked authentication"""
-        with patch('discogs_api_client.os.getenv') as mock_getenv, \
-             patch('discogs_api_client.discogs_client.Client') as mock_client_class:
+        with patch('services.discogs_api_client.os.getenv') as mock_getenv, \
+             patch('services.discogs_api_client.discogs_client.Client') as mock_client_class:
             
             # Setup mock environment variables
             mock_getenv.side_effect = lambda key, default: {
@@ -116,7 +116,8 @@ class TestCompleteWorkflow:
             # Create client
             client = DiscogsCollectionClient(
                 consumer_key="test_key",
-                consumer_secret="test_secret"
+                consumer_secret="test_secret",
+                useragent="pyqrfactorydiscogs/1.0"
             )
             
             # Mock the client and identity

@@ -28,6 +28,7 @@ try:
     client = DiscogsCollectionClient(
         consumer_key=consumer_key,
         consumer_secret=consumer_secret,
+        useragent="pyqrfactorydiscogs/1.0",
         oauth_token=oauth_token,
         oauth_token_secret=oauth_token_secret
     )

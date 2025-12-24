@@ -22,7 +22,7 @@ def test_workflow():
 
     # Step 1: Authentication
     print("\n[Step 1] Testing Authentication...")
-    client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test")
+    client = DiscogsCollectionClient(consumer_key="test", consumer_secret="test", useragent="pyqrfactorydiscogs/1.0")
     assert hasattr(client, 'authenticate'), "Client should have authenticate method"
     print("✓ Authentication method available")
 
