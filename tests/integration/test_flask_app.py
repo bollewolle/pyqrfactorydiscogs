@@ -62,10 +62,11 @@ class TestFlaskApp:
     def test_folders_route_authenticated(self, flask_test_client):
         """Test folders route when authenticated"""
         with flask_test_client.session_transaction() as sess:
-            sess['authenticated'] = True
+            sess['oauth_token'] = 'test_token'
+            sess['oauth_secret'] = 'test_secret'
             sess['consumer_key'] = 'test_key'
             sess['consumer_secret'] = 'test_secret'
-        
+         
         with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
             # Mock the client
             mock_client = MagicMock()
@@ -96,10 +97,11 @@ class TestFlaskApp:
     def test_releases_route_authenticated(self, flask_test_client):
         """Test releases route when authenticated"""
         with flask_test_client.session_transaction() as sess:
-            sess['authenticated'] = True
+            sess['oauth_token'] = 'test_token'
+            sess['oauth_secret'] = 'test_secret'
             sess['consumer_key'] = 'test_key'
             sess['consumer_secret'] = 'test_secret'
-        
+         
         with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
             # Mock the client
             mock_client = MagicMock()
@@ -128,20 +130,21 @@ class TestFlaskApp:
     def test_generate_csv_route(self, flask_test_client):
         """Test CSV generation route"""
         with flask_test_client.session_transaction() as sess:
-            sess['authenticated'] = True
+            sess['oauth_token'] = 'test_token'
+            sess['oauth_secret'] = 'test_secret'
             sess['consumer_key'] = 'test_key'
             sess['consumer_secret'] = 'test_secret'
-        
+         
         # Mock form data
         test_data = {
             'release_ids': ['100', '101'],
             'sort_by': 'year',
             'sort_order': 'desc'
         }
-        
+         
         with patch('app.routes.DiscogsCollectionClient') as mock_client_class, \
              patch('app.routes.DiscogsCollectionProcessor') as mock_processor_class:
-            
+             
             # Mock the client
             mock_client = MagicMock()
             mock_client_class.return_value = mock_client
@@ -177,9 +180,8 @@ class TestFlaskApp:
                 }
             ]
             
-            response = flask_test_client.post('/generate-csv', data=test_data)
+            response = flask_test_client.post('/preview/?release_ids=100&release_ids=101', data=test_data, follow_redirects=True)
             
-            # Should return CSV file
+            # Should redirect to editable preview
             assert response.status_code == 200
-            assert response.content_type == 'text/csv'
-            assert 'attachment; filename=discogs_collection.csv' in response.headers.get('Content-Disposition', '')
+            assert b'Artist One' in response.data or b'Album One' in response.data
