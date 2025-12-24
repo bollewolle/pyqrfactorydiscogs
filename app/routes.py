@@ -19,13 +19,22 @@ from services.discogs_collection_processor import DiscogsCollectionProcessor
 USERAGENT = os.getenv("USERAGENT", "pyqrfactorydiscogs/1.0")
 DOTENV_PATH = ".env"
 
+def is_test_environment() -> bool:
+    """
+    Check if the code is running in a test environment.
+    
+    Returns:
+        bool: True if running in test environment, False otherwise
+    """
+    return os.getenv("PYTEST_CURRENT_TEST", "") != "" or os.getenv("TESTING", "") == "1" or os.getenv("FLASK_TESTING", "") == "1"
+
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
     """Main page with authentication form or auto-authentication if .env exists"""
-    # Check if .env file exists and has all required credentials
-    if os.path.exists('.env'):
+    # Skip auto-authentication during tests
+    if not is_test_environment() and os.path.exists('.env'):
         load_dotenv(DOTENV_PATH)
         
         # Get credentials from environment
@@ -123,19 +132,20 @@ def authenticate():
         session['oauth_token'] = client.oauth_token
         session['oauth_secret'] = client.oauth_token_secret
 
-        # Store credentials in .env file
-        try:
-            # Update or create .env file with credentials
-            set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
-            set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
-            if client.oauth_token:
-                set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(client.oauth_token))
-            if client.oauth_token_secret:
-                set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(client.oauth_token_secret))
-            
-            current_app.logger.info('Credentials stored in .env file')
-        except Exception as env_error:
-            current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
+        # Store credentials in .env file (but not during tests)
+        if not is_test_environment():
+            try:
+                # Update or create .env file with credentials
+                set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
+                set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
+                if client.oauth_token:
+                    set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(client.oauth_token))
+                if client.oauth_token_secret:
+                    set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(client.oauth_token_secret))
+                
+                current_app.logger.info('Credentials stored in .env file')
+            except Exception as env_error:
+                current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
 
         flash('Successfully authenticated!', 'success')
         return redirect(url_for('main.folders'))
@@ -187,15 +197,16 @@ def oauth_callback():
         session['oauth_token'] = access_token
         session['oauth_secret'] = access_token_secret
 
-        # Store credentials in .env file
-        try:
-            set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
-            set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
-            set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(access_token))
-            set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(access_token_secret))
-            current_app.logger.info('OAuth credentials stored in .env file')
-        except Exception as env_error:
-            current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
+        # Store credentials in .env file (but not during tests)
+        if not is_test_environment():
+            try:
+                set_key('.env', 'DISCOGS_CONSUMER_KEY', consumer_key)
+                set_key('.env', 'DISCOGS_CONSUMER_SECRET', consumer_secret)
+                set_key('.env', 'DISCOGS_OAUTH_TOKEN', str(access_token))
+                set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', str(access_token_secret))
+                current_app.logger.info('OAuth credentials stored in .env file')
+            except Exception as env_error:
+                current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
 
         # Show success page and then redirect
         return render_template('oauth_callback.html', success=True)

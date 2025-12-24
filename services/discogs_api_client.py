@@ -21,6 +21,27 @@ DOTENV_PATH = "../.env"
 
 logger = logging.getLogger(__name__)
 
+def is_test_environment() -> bool:
+    """
+    Check if the code is running in a test environment.
+    
+    Returns:
+        bool: True if running in test environment, False otherwise
+    """
+    # Check if we're running in a pytest context by checking if pytest is in the call stack
+    import sys
+    is_pytest = any('pytest' in module.__name__ for module in sys.modules.values() if hasattr(module, '__name__'))
+    
+    # Also check environment variables as fallback
+    pytest_current_test = os.getenv("PYTEST_CURRENT_TEST", "")
+    testing = os.getenv("TESTING", "")
+    flask_testing = os.getenv("FLASK_TESTING", "")
+    env_result = pytest_current_test != "" or testing == "1" or flask_testing == "1"
+    
+    result = is_pytest or env_result
+    print(f"DEBUG: is_pytest={is_pytest}, PYTEST_CURRENT_TEST='{pytest_current_test}', TESTING='{testing}', FLASK_TESTING='{flask_testing}', is_test_environment={result}")
+    return result
+
 class DiscogsCollectionClient:
     """
     A client for interacting with the Discogs API to retrieve collection data.
@@ -121,14 +142,15 @@ class DiscogsCollectionClient:
                 # Get authorization URL and tokens
                 self.oauth_token, self.oauth_token_secret, url = self.client.get_authorize_url()
 
-                # Also persist to .env file if possible
-                try:
-                    from dotenv import set_key
-                    set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
-                    set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
-                except ImportError:
-                    # If dotenv is not available, just set environment variables
-                    pass
+                # Also persist to .env file if possible (but not during tests)
+                if not is_test_environment():
+                    try:
+                        from dotenv import set_key
+                        set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
+                        set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
+                    except ImportError:
+                        # If dotenv is not available, just set environment variables
+                        pass
 
                 print(" == Request Token == ")
                 print(f"    * oauth_token        = {self.oauth_token}")
@@ -151,14 +173,15 @@ class DiscogsCollectionClient:
                     os.environ['DISCOGS_OAUTH_TOKEN'] = self.oauth_token
                     os.environ['DISCOGS_OAUTH_TOKEN_SECRET'] = self.oauth_token_secret
 
-                    # Also persist to .env file if possible
-                    try:
-                        from dotenv import set_key
-                        set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
-                        set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
-                    except ImportError:
-                        # If dotenv is not available, just set environment variables
-                        pass
+                    # Also persist to .env file if possible (but not during tests)
+                    if not is_test_environment():
+                        try:
+                            from dotenv import set_key
+                            set_key('.env', 'DISCOGS_OAUTH_TOKEN', self.oauth_token)
+                            set_key('.env', 'DISCOGS_OAUTH_TOKEN_SECRET', self.oauth_token_secret)
+                        except ImportError:
+                            # If dotenv is not available, just set environment variables
+                            pass
 
                 except HTTPError as error:
                     raise ConnectionError(f"Unable to authenticate with Discogs API: {error}")
@@ -252,6 +275,11 @@ class DiscogsCollectionClient:
 
             # Get user identity
             self.user = self.client.identity()
+
+            # Update environment variables with final tokens (but not during tests)
+            if not is_test_environment():
+                os.environ['DISCOGS_OAUTH_TOKEN'] = self.oauth_token
+                os.environ['DISCOGS_OAUTH_TOKEN_SECRET'] = self.oauth_token_secret
 
             return access_token, access_token_secret
 

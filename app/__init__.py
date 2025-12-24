@@ -18,6 +18,11 @@ def create_app():
         PERMANENT_SESSION_LIFETIME=3600,  # 1 hour session timeout
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max upload size
     )
+    
+    # Set environment variable for testing mode
+    if app.config.get('TESTING', False):
+        import os
+        os.environ['FLASK_TESTING'] = '1'
 
     # Register blueprints
     from app import routes
