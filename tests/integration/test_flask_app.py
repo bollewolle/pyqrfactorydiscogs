@@ -185,3 +185,74 @@ class TestFlaskApp:
             # Should redirect to editable preview
             assert response.status_code == 200
             assert b'Artist One' in response.data or b'Album One' in response.data
+
+    def test_releases_sorting_functionality(self, flask_test_client):
+            """Test releases sorting functionality"""
+            with flask_test_client.session_transaction() as sess:
+                sess['oauth_token'] = 'test_token'
+                sess['oauth_secret'] = 'test_secret'
+                sess['consumer_key'] = 'test_key'
+                sess['consumer_secret'] = 'test_secret'
+              
+            with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
+                # Mock the client
+                mock_client = MagicMock()
+                mock_client_class.return_value = mock_client
+                
+                # Mock release retrieval with multiple releases of different years
+                mock_release_data = {
+                    0: {
+                        'id': 100,
+                        'title': 'Album One',
+                        'artist': 'Artist One',
+                        'year': 2020,
+                        'format': [{'name': 'Vinyl', 'qty': '1'}],
+                        'label': 'Label One',
+                        'url': 'https://www.discogs.com/release/100-Artist-One-Album-One',
+                        'date_added': '2020-01-01'
+                    },
+                    1: {
+                        'id': 101,
+                        'title': 'Album Two',
+                        'artist': 'Artist Two',
+                        'year': 2018,
+                        'format': [{'name': 'CD', 'qty': '1'}],
+                        'label': 'Label Two',
+                        'url': 'https://www.discogs.com/release/101-Artist-Two-Album-Two',
+                        'date_added': '2018-01-01'
+                    },
+                    2: {
+                        'id': 102,
+                        'title': 'Album Three',
+                        'artist': 'Artist Three',
+                        'year': 2022,
+                        'format': [{'name': 'Vinyl', 'qty': '1'}],
+                        'label': 'Label Three',
+                        'url': 'https://www.discogs.com/release/102-Artist-Three-Album-Three',
+                        'date_added': '2022-01-01'
+                    }
+                }
+                
+                mock_client.get_collection_releases_by_folder.return_value = mock_release_data
+                
+                # Test default sorting (newest first)
+                response = flask_test_client.get('/releases/1')
+                assert response.status_code == 200
+                # Should show newest first (2022, 2020, 2018)
+                data = response.data.decode('utf-8')
+                year_positions = []
+                for year in ['2022', '2020', '2018']:
+                    year_positions.append((year, data.find(year)))
+                # Check that years appear in descending order
+                assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]
+                
+                # Test oldest first sorting
+                response = flask_test_client.get('/releases/1?sort=oldest_first')
+                assert response.status_code == 200
+                # Should show oldest first (2018, 2020, 2022)
+                data = response.data.decode('utf-8')
+                year_positions = []
+                for year in ['2018', '2020', '2022']:
+                    year_positions.append((year, data.find(year)))
+                # Check that years appear in ascending order
+                assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]

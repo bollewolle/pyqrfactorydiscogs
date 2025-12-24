@@ -300,20 +300,29 @@ def releases(folder_id):
             releases_list.append(folder_releases)
 
 
-        # Sort by date (newest first)
-        sorted_releases = sorted(
-            releases_list,
-            key=lambda x: int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0,
-            reverse=True
-        )
-
-
         # Handle POST requests (e.g., sorting)
         if request.method == 'POST':
             # If sorting was requested, redirect back to same page with sort parameter
             if 'sort_only' in request.form:
                 sort_order = request.form.get('sort_order', 'newest_first')
                 return redirect(url_for('main.releases', folder_id=folder_id, sort=sort_order))
+
+        # Get sort parameter from URL
+        sort_order = request.args.get('sort', 'newest_first')
+
+        # Sort releases based on sort order
+        if sort_order == 'oldest_first':
+            sorted_releases = sorted(
+                releases_list,
+                key=lambda x: int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0,
+                reverse=False
+            )
+        else:  # Default: newest_first
+            sorted_releases = sorted(
+                releases_list,
+                key=lambda x: int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0,
+                reverse=True
+            )
 
         return render_template(
             'releases.html',
