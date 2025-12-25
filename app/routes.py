@@ -319,10 +319,22 @@ def releases(folder_id):
                 return redirect(url_for('main.releases', folder_id=folder_id, sort=sort_order))
 
         # Get sort parameter from URL
-        sort_order = request.args.get('sort', 'newest_first')
+        sort_order = request.args.get('sort', 'artist_az')
 
         # Sort releases based on sort order
-        if sort_order == 'oldest_first':
+        if sort_order == 'artist_az':
+            sorted_releases = sorted(
+                releases_list,
+                key=lambda x: x.get('artist', '').lower(),
+                reverse=False
+            )
+        elif sort_order == 'artist_za':
+            sorted_releases = sorted(
+                releases_list,
+                key=lambda x: x.get('artist', '').lower(),
+                reverse=True
+            )
+        elif sort_order == 'oldest_first':
             sorted_releases = sorted(
                 releases_list,
                 key=lambda x: int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0,

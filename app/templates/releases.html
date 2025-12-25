@@ -8,6 +8,8 @@
             <label for="sort_order">
                 Sort by:
                 <select id="sort_order" name="sort_order">
+                    <option value="artist_az" {% if sort_by == 'artist_az' %}selected{% endif %}>Artist (A-Z)</option>
+                    <option value="artist_za" {% if sort_by == 'artist_za' %}selected{% endif %}>Artist (Z-A)</option>
                     <option value="newest_first" {% if sort_by == 'newest_first' %}selected{% endif %}>Newest First</option>
                     <option value="oldest_first" {% if sort_by == 'oldest_first' %}selected{% endif %}>Oldest First</option>
                     <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>Date Added</option>

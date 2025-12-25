@@ -235,16 +235,16 @@ class TestFlaskApp:
                 
                 mock_client.get_collection_releases_by_folder.return_value = mock_release_data
                 
-                # Test default sorting (newest first)
+                # Test default sorting (artist A-Z)
                 response = flask_test_client.get('/releases/1')
                 assert response.status_code == 200
-                # Should show newest first (2022, 2020, 2018)
+                # Should show artists in alphabetical order (Artist One, Artist Three, Artist Two)
                 data = response.data.decode('utf-8')
-                year_positions = []
-                for year in ['2022', '2020', '2018']:
-                    year_positions.append((year, data.find(year)))
-                # Check that years appear in descending order
-                assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]
+                artist_positions = []
+                for artist in ['Artist One', 'Artist Three', 'Artist Two']:
+                    artist_positions.append((artist, data.find(artist)))
+                # Check that artists appear in alphabetical order
+                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
                 
                 # Test oldest first sorting
                 response = flask_test_client.get('/releases/1?sort=oldest_first')
@@ -256,6 +256,28 @@ class TestFlaskApp:
                     year_positions.append((year, data.find(year)))
                 # Check that years appear in ascending order
                 assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]
+                
+                # Test artist A-Z sorting
+                response = flask_test_client.get('/releases/1?sort=artist_az')
+                assert response.status_code == 200
+                # Should show artists in alphabetical order (Artist One, Artist Three, Artist Two)
+                data = response.data.decode('utf-8')
+                artist_positions = []
+                for artist in ['Artist One', 'Artist Three', 'Artist Two']:
+                    artist_positions.append((artist, data.find(artist)))
+                # Check that artists appear in alphabetical order
+                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
+                
+                # Test artist Z-A sorting
+                response = flask_test_client.get('/releases/1?sort=artist_za')
+                assert response.status_code == 200
+                # Should show artists in reverse alphabetical order (Artist Two, Artist Three, Artist One)
+                data = response.data.decode('utf-8')
+                artist_positions = []
+                for artist in ['Artist Two', 'Artist Three', 'Artist One']:
+                    artist_positions.append((artist, data.find(artist)))
+                # Check that artists appear in reverse alphabetical order
+                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
                 
                 # Test date added sorting
                 response = flask_test_client.get('/releases/1?sort=date_added')
