@@ -256,3 +256,14 @@ class TestFlaskApp:
                     year_positions.append((year, data.find(year)))
                 # Check that years appear in ascending order
                 assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]
+                
+                # Test date added sorting
+                response = flask_test_client.get('/releases/1?sort=date_added')
+                assert response.status_code == 200
+                # Should show most recently added first (2022, 2020, 2018)
+                data = response.data.decode('utf-8')
+                date_positions = []
+                for date in ['2022-01-01', '2020-01-01', '2018-01-01']:
+                    date_positions.append((date, data.find(date)))
+                # Check that dates appear in descending order (newest added first)
+                assert date_positions[0][1] < date_positions[1][1] < date_positions[2][1]

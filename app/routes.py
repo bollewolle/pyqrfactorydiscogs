@@ -328,6 +328,12 @@ def releases(folder_id):
                 key=lambda x: int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0,
                 reverse=False
             )
+        elif sort_order == 'date_added':
+            sorted_releases = sorted(
+                releases_list,
+                key=lambda x: x.get('date_added', ''),
+                reverse=True
+            )
         else:  # Default: newest_first
             sorted_releases = sorted(
                 releases_list,
