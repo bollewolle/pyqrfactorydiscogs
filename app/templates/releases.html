@@ -54,36 +54,33 @@
 
         <div style="margin-top: 15px;">
             <label for="letter-select">Select by Artist Starting Letter:</label>
-            <select id="letter-select" name="letter-select" multiple style="width: 200px; height: 100px;">
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E">E</option>
-                <option value="F">F</option>
-                <option value="G">G</option>
-                <option value="H">H</option>
-                <option value="I">I</option>
-                <option value="J">J</option>
-                <option value="K">K</option>
-                <option value="L">L</option>
-                <option value="M">M</option>
-                <option value="N">N</option>
-                <option value="O">O</option>
-                <option value="P">P</option>
-                <option value="Q">Q</option>
-                <option value="R">R</option>
-                <option value="S">S</option>
-                <option value="T">T</option>
-                <option value="U">U</option>
-                <option value="V">V</option>
-                <option value="W">W</option>
-                <option value="X">X</option>
-                <option value="Y">Y</option>
-                <option value="Z">Z</option>
-                <option value="0-9">0-9</option>
-                <option value="other">Other</option>
-            </select>
+            <div id="letter-dropdown-container" style="position: relative; display: inline-block;">
+                <button type="button" id="letter-dropdown-button" style="padding: 5px 10px; cursor: pointer;">
+                    Select Letters (0)
+                </button>
+                <div id="letter-dropdown-menu" style="
+                    display: none;
+                    position: absolute;
+                    background-color: white;
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                    z-index: 1000;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    width: 250px;
+                ">
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="letter-search" placeholder="Search letters..."
+                               style="width: 100%; padding: 5px; box-sizing: border-box;">
+                    </div>
+                    <div id="letter-options" style="display: flex; flex-wrap: wrap; gap: 5px;">
+                        <!-- Letter options will be dynamically generated here -->
+                    </div>
+                    <div style="margin-top: 10px; text-align: right;">
+                        <button type="button" id="clear-letter-selection" style="padding: 3px 8px;">Clear</button>
+                    </div>
+                </div>
+            </div>
             <button type="button" id="select-by-letter" style="margin-left: 10px;">Select by Letter</button>
             <button type="button" id="deselect-by-letter" class="btn-secondary">Deselect by Letter</button>
         </div>
@@ -112,12 +109,143 @@
                 });
             });
 
+            // Letter selection functionality
+            let selectedLetters = new Set();
+            let availableLetters = new Set();
+            
+            // Function to extract first letter category from artist name
+            function getArtistFirstLetterCategory(artistName) {
+                if (!artistName) return null;
+                
+                const firstChar = artistName.charAt(0).toUpperCase();
+                
+                if (/^[0-9]/.test(firstChar)) {
+                    return '0-9';
+                } else if (/^[A-Z]/.test(firstChar)) {
+                    return firstChar;
+                } else {
+                    return 'other';
+                }
+            }
+            
+            // Function to update available letters based on artists in table
+            function updateAvailableLetters() {
+                availableLetters.clear();
+                
+                const artistCells = document.querySelectorAll('#releases-table tbody td:nth-child(3)');
+                artistCells.forEach(cell => {
+                    const artistName = cell.textContent.trim();
+                    const letter = getArtistFirstLetterCategory(artistName);
+                    if (letter) {
+                        availableLetters.add(letter);
+                    }
+                });
+                
+                // Always include 0-9 and other as options
+                availableLetters.add('0-9');
+                availableLetters.add('other');
+            }
+            
+            // Function to render letter options
+            function renderLetterOptions() {
+                const letterOptionsContainer = document.getElementById('letter-options');
+                letterOptionsContainer.innerHTML = '';
+                
+                // Sort letters: A-Z first, then 0-9, then other
+                const sortedLetters = Array.from(availableLetters).sort((a, b) => {
+                    if (a === '0-9') return 1;
+                    if (b === '0-9') return -1;
+                    if (a === 'other') return 1;
+                    if (b === 'other') return -1;
+                    return a.localeCompare(b);
+                });
+                
+                sortedLetters.forEach(letter => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.textContent = letter;
+                    button.style.padding = '5px 10px';
+                    button.style.cursor = 'pointer';
+                    button.style.border = '1px solid #ccc';
+                    button.style.backgroundColor = selectedLetters.has(letter) ? '#007bff' : 'white';
+                    button.style.color = selectedLetters.has(letter) ? 'white' : 'black';
+                    
+                    button.addEventListener('click', function() {
+                        if (selectedLetters.has(letter)) {
+                            selectedLetters.delete(letter);
+                            button.style.backgroundColor = 'white';
+                            button.style.color = 'black';
+                        } else {
+                            selectedLetters.add(letter);
+                            button.style.backgroundColor = '#007bff';
+                            button.style.color = 'white';
+                        }
+                        updateDropdownButtonText();
+                    });
+                    
+                    letterOptionsContainer.appendChild(button);
+                });
+            }
+            
+            // Function to update dropdown button text
+            function updateDropdownButtonText() {
+                const button = document.getElementById('letter-dropdown-button');
+                if (selectedLetters.size === 0) {
+                    button.textContent = 'Select Letters (0)';
+                } else if (selectedLetters.size === 1) {
+                    button.textContent = `Selected: ${Array.from(selectedLetters)[0]} (1)`;
+                } else {
+                    button.textContent = `Selected: ${selectedLetters.size} letters`;
+                }
+            }
+            
+            // Dropdown toggle functionality
+            document.getElementById('letter-dropdown-button').addEventListener('click', function() {
+                const dropdownMenu = document.getElementById('letter-dropdown-menu');
+                if (dropdownMenu.style.display === 'none' || dropdownMenu.style.display === '') {
+                    dropdownMenu.style.display = 'block';
+                } else {
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdownContainer = document.getElementById('letter-dropdown-container');
+                if (!dropdownContainer.contains(event.target)) {
+                    document.getElementById('letter-dropdown-menu').style.display = 'none';
+                }
+            });
+            
+            // Clear selection button
+            document.getElementById('clear-letter-selection').addEventListener('click', function() {
+                selectedLetters.clear();
+                updateDropdownButtonText();
+                renderLetterOptions();
+            });
+            
+            // Search functionality for letters
+            document.getElementById('letter-search').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const buttons = document.querySelectorAll('#letter-options button');
+                
+                buttons.forEach(button => {
+                    const letter = button.textContent.toLowerCase();
+                    if (letter.includes(searchTerm)) {
+                        button.style.display = 'inline-block';
+                    } else {
+                        button.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Initialize letter selection
+            updateAvailableLetters();
+            renderLetterOptions();
+
             // Select by Letter button
             document.getElementById('select-by-letter').addEventListener('click', function() {
-                const selectedLetters = Array.from(document.getElementById('letter-select').selectedOptions)
-                    .map(option => option.value);
-                
-                if (selectedLetters.length === 0) {
+                if (selectedLetters.size === 0) {
                     alert('Please select at least one letter');
                     return;
                 }
@@ -129,16 +257,8 @@
                     const artistName = artistCell.textContent.trim();
                     
                     // Check if artist starts with any of the selected letters
-                    const shouldSelect = selectedLetters.some(letter => {
-                        if (letter === '0-9') {
-                            return /^[0-9]/.test(artistName);
-                        } else if (letter === 'other') {
-                            return !/^[A-Za-z0-9]/.test(artistName);
-                        } else {
-                            const firstChar = artistName.charAt(0).toUpperCase();
-                            return firstChar === letter;
-                        }
-                    });
+                    const artistLetter = getArtistFirstLetterCategory(artistName);
+                    const shouldSelect = selectedLetters.has(artistLetter);
                     
                     checkbox.checked = shouldSelect;
                 });
@@ -146,10 +266,7 @@
 
             // Deselect by Letter button
             document.getElementById('deselect-by-letter').addEventListener('click', function() {
-                const selectedLetters = Array.from(document.getElementById('letter-select').selectedOptions)
-                    .map(option => option.value);
-                
-                if (selectedLetters.length === 0) {
+                if (selectedLetters.size === 0) {
                     alert('Please select at least one letter');
                     return;
                 }
@@ -161,16 +278,8 @@
                     const artistName = artistCell.textContent.trim();
                     
                     // Check if artist starts with any of the selected letters
-                    const shouldDeselect = selectedLetters.some(letter => {
-                        if (letter === '0-9') {
-                            return /^[0-9]/.test(artistName);
-                        } else if (letter === 'other') {
-                            return !/^[A-Za-z0-9]/.test(artistName);
-                        } else {
-                            const firstChar = artistName.charAt(0).toUpperCase();
-                            return firstChar === letter;
-                        }
-                    });
+                    const artistLetter = getArtistFirstLetterCategory(artistName);
+                    const shouldDeselect = selectedLetters.has(artistLetter);
                     
                     if (shouldDeselect) {
                         checkbox.checked = false;

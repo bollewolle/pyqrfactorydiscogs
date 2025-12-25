@@ -340,44 +340,74 @@ class TestFlaskApp:
                 assert date_positions[0][1] < date_positions[1][1] < date_positions[2][1] < date_positions[3][1] < date_positions[4][1] < date_positions[5][1]
 
     def test_releases_letter_selection_ui(self, flask_test_client):
-       """Test that the letter selection UI is present on releases page"""
-       with flask_test_client.session_transaction() as sess:
-           sess['oauth_token'] = 'test_token'
-           sess['oauth_secret'] = 'test_secret'
-           sess['consumer_key'] = 'test_key'
-           sess['consumer_secret'] = 'test_secret'
+        """Test that the letter selection UI is present on releases page"""
+        with flask_test_client.session_transaction() as sess:
+            sess['oauth_token'] = 'test_token'
+            sess['oauth_secret'] = 'test_secret'
+            sess['consumer_key'] = 'test_key'
+            sess['consumer_secret'] = 'test_secret'
 
-       with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
-           # Mock the client
-           mock_client = MagicMock()
-           mock_client_class.return_value = mock_client
+        with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
+            # Mock the client
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
 
-           # Mock release retrieval
-           mock_release_data = {
-               0: {
-                   'id': 100,
-                   'title': 'Album One',
-                   'artist': 'Artist One',
-                   'year': 2020,
-                   'format': [{'name': 'Vinyl', 'qty': '1'}],
-                   'label': 'Label One',
-                   'url': 'https://www.discogs.com/release/100-Artist-One-Album-One'
-               }
-           }
+            # Mock release retrieval with artists starting with different letters
+            mock_release_data = {
+                0: {
+                    'id': 100,
+                    'title': 'Album One',
+                    'artist': 'Artist One',
+                    'year': 2020,
+                    'format': [{'name': 'Vinyl', 'qty': '1'}],
+                    'label': 'Label One',
+                    'url': 'https://www.discogs.com/release/100-Artist-One-Album-One'
+                },
+                1: {
+                    'id': 101,
+                    'title': 'Beatles Album',
+                    'artist': 'Beatles',
+                    'year': 2021,
+                    'format': [{'name': 'Vinyl', 'qty': '1'}],
+                    'label': 'Label Two',
+                    'url': 'https://www.discogs.com/release/101-Beatles-Album'
+                },
+                2: {
+                    'id': 102,
+                    'title': 'Muse Album',
+                    'artist': 'Muse',
+                    'year': 2022,
+                    'format': [{'name': 'Vinyl', 'qty': '1'}],
+                    'label': 'Label Three',
+                    'url': 'https://www.discogs.com/release/102-Muse-Album'
+                },
+                3: {
+                    'id': 103,
+                    'title': 'Numeric Band',
+                    'artist': '123 Band',
+                    'year': 2023,
+                    'format': [{'name': 'Vinyl', 'qty': '1'}],
+                    'label': 'Label Four',
+                    'url': 'https://www.discogs.com/release/103-123-Band'
+                }
+            }
 
-           mock_client.get_collection_releases_by_folder.return_value = mock_release_data
+            mock_client.get_collection_releases_by_folder.return_value = mock_release_data
 
-           response = flask_test_client.get('/releases/1')
-           assert response.status_code == 200
+            response = flask_test_client.get('/releases/1')
+            assert response.status_code == 200
 
-           # Check that letter selection UI elements are present
-           data = response.data.decode('utf-8')
-           assert 'Select by Artist Starting Letter:' in data
-           assert 'letter-select' in data
-           assert 'select-by-letter' in data
-           assert 'deselect-by-letter' in data
+            # Check that letter selection UI elements are present
+            data = response.data.decode('utf-8')
+            assert 'Select by Artist Starting Letter:' in data
+            assert 'letter-dropdown-container' in data
+            assert 'letter-dropdown-button' in data
+            assert 'letter-dropdown-menu' in data
+            assert 'letter-search' in data
+            assert 'letter-options' in data
+            assert 'clear-letter-selection' in data
+            assert 'select-by-letter' in data
+            assert 'deselect-by-letter' in data
 
-           # Check that all letter options are present
-           for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-                        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0-9', 'other']:
-               assert f'value="{letter}"' in data
+            # Check that the dropdown button text is present
+            assert 'Select Letters' in data
