@@ -199,37 +199,67 @@ class TestFlaskApp:
                 mock_client = MagicMock()
                 mock_client_class.return_value = mock_client
                 
-                # Mock release retrieval with multiple releases of different years
+                # Mock release retrieval with multiple releases including same artist with different years
                 mock_release_data = {
                     0: {
                         'id': 100,
                         'title': 'Album One',
-                        'artist': 'Artist One',
-                        'year': 2020,
+                        'artist': 'Muse',
+                        'year': 2015,
                         'format': [{'name': 'Vinyl', 'qty': '1'}],
                         'label': 'Label One',
-                        'url': 'https://www.discogs.com/release/100-Artist-One-Album-One',
+                        'url': 'https://www.discogs.com/release/100-Muse-Album-One',
                         'date_added': '2020-01-01'
                     },
                     1: {
                         'id': 101,
                         'title': 'Album Two',
-                        'artist': 'Artist Two',
-                        'year': 2018,
+                        'artist': 'Muse',
+                        'year': 2009,
                         'format': [{'name': 'CD', 'qty': '1'}],
                         'label': 'Label Two',
-                        'url': 'https://www.discogs.com/release/101-Artist-Two-Album-Two',
+                        'url': 'https://www.discogs.com/release/101-Muse-Album-Two',
                         'date_added': '2018-01-01'
                     },
                     2: {
                         'id': 102,
                         'title': 'Album Three',
-                        'artist': 'Artist Three',
-                        'year': 2022,
+                        'artist': 'Muse',
+                        'year': 2012,
                         'format': [{'name': 'Vinyl', 'qty': '1'}],
                         'label': 'Label Three',
-                        'url': 'https://www.discogs.com/release/102-Artist-Three-Album-Three',
+                        'url': 'https://www.discogs.com/release/102-Muse-Album-Three',
                         'date_added': '2022-01-01'
+                    },
+                    3: {
+                        'id': 103,
+                        'title': 'Album Four',
+                        'artist': 'Beatles',
+                        'year': 1969,
+                        'format': [{'name': 'Vinyl', 'qty': '1'}],
+                        'label': 'Label Four',
+                        'url': 'https://www.discogs.com/release/103-Beatles-Album-Four',
+                        'date_added': '2019-01-01'
+                    },
+                    4: {
+                        'id': 104,
+                        'title': 'Album Five',
+                        'artist': 'Beatles',
+                        'year': 1967,
+                        'format': [{'name': 'Vinyl', 'qty': '1'}],
+                        'label': 'Label Five',
+                        'url': 'https://www.discogs.com/release/104-Beatles-Album-Five',
+                        'date_added': '2017-01-01'
+                    },
+                    5: {
+                        'id': 105,
+                        'title': 'Album Six',
+                        'artist': 'Beatles',
+                        'year': 1971,
+                        'format': [{'name': 'Vinyl', 'qty': '1'}],
+                        'label': 'Label Six',
+                        'url': 'https://www.discogs.com/release/105-Beatles-Album-Six',
+                        'date_added': '2021-01-01'
                     }
                 }
                 
@@ -238,54 +268,73 @@ class TestFlaskApp:
                 # Test default sorting (artist A-Z)
                 response = flask_test_client.get('/releases/1')
                 assert response.status_code == 200
-                # Should show artists in alphabetical order (Artist One, Artist Three, Artist Two)
+                # Should show artists in alphabetical order (Beatles, Muse)
                 data = response.data.decode('utf-8')
-                artist_positions = []
-                for artist in ['Artist One', 'Artist Three', 'Artist Two']:
-                    artist_positions.append((artist, data.find(artist)))
-                # Check that artists appear in alphabetical order
-                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
+                
+                # Check that Beatles come before Muse (alphabetical order)
+                beatles_pos = data.find('Beatles')
+                muse_pos = data.find('Muse')
+                assert beatles_pos > 0 and muse_pos > 0
+                assert beatles_pos < muse_pos
                 
                 # Test oldest first sorting
                 response = flask_test_client.get('/releases/1?sort=oldest_first')
                 assert response.status_code == 200
-                # Should show oldest first (2018, 2020, 2022)
+                # Should show oldest first (1967, 1969, 1971, 2009, 2012, 2015)
                 data = response.data.decode('utf-8')
                 year_positions = []
-                for year in ['2018', '2020', '2022']:
+                for year in ['1967', '1969', '1971', '2009', '2012', '2015']:
                     year_positions.append((year, data.find(year)))
                 # Check that years appear in ascending order
-                assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1]
+                assert year_positions[0][1] < year_positions[1][1] < year_positions[2][1] < year_positions[3][1] < year_positions[4][1] < year_positions[5][1]
                 
-                # Test artist A-Z sorting
+                # Test artist A-Z sorting with secondary year sorting
                 response = flask_test_client.get('/releases/1?sort=artist_az')
                 assert response.status_code == 200
-                # Should show artists in alphabetical order (Artist One, Artist Three, Artist Two)
+                # Should show artists in alphabetical order (Beatles, Muse)
+                # And within each artist, albums should be sorted by year (oldest to newest)
                 data = response.data.decode('utf-8')
-                artist_positions = []
-                for artist in ['Artist One', 'Artist Three', 'Artist Two']:
-                    artist_positions.append((artist, data.find(artist)))
-                # Check that artists appear in alphabetical order
-                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
                 
-                # Test artist Z-A sorting
+                # Check that Beatles come before Muse (alphabetical order)
+                beatles_pos = data.find('Beatles')
+                muse_pos = data.find('Muse')
+                assert beatles_pos > 0 and muse_pos > 0
+                assert beatles_pos < muse_pos
+                
+                # Check that Beatles albums are sorted by year (1967, 1969, 1971)
+                year_1967_pos = data.find('1967')
+                year_1969_pos = data.find('1969')
+                year_1971_pos = data.find('1971')
+                assert year_1967_pos > 0 and year_1969_pos > 0 and year_1971_pos > 0
+                assert year_1967_pos < year_1969_pos < year_1971_pos
+                
+                # Test artist Z-A sorting with secondary year sorting
                 response = flask_test_client.get('/releases/1?sort=artist_za')
                 assert response.status_code == 200
-                # Should show artists in reverse alphabetical order (Artist Two, Artist Three, Artist One)
+                # Should show artists in reverse alphabetical order (Muse, Beatles)
+                # And within each artist, albums should be sorted by year (newest to oldest)
                 data = response.data.decode('utf-8')
-                artist_positions = []
-                for artist in ['Artist Two', 'Artist Three', 'Artist One']:
-                    artist_positions.append((artist, data.find(artist)))
-                # Check that artists appear in reverse alphabetical order
-                assert artist_positions[0][1] < artist_positions[1][1] < artist_positions[2][1]
+                
+                # Check that Muse comes before Beatles (reverse alphabetical order)
+                muse_pos = data.find('Muse')
+                beatles_pos = data.find('Beatles')
+                assert muse_pos > 0 and beatles_pos > 0
+                assert muse_pos < beatles_pos
+                
+                # Check that Muse albums are sorted by year (2015, 2012, 2009)
+                year_2015_pos = data.find('2015')
+                year_2012_pos = data.find('2012')
+                year_2009_pos = data.find('2009')
+                assert year_2015_pos > 0 and year_2012_pos > 0 and year_2009_pos > 0
+                assert year_2015_pos < year_2012_pos < year_2009_pos
                 
                 # Test date added sorting
                 response = flask_test_client.get('/releases/1?sort=date_added')
                 assert response.status_code == 200
-                # Should show most recently added first (2022, 2020, 2018)
+                # Should show most recently added first (2022, 2021, 2020, 2019, 2018, 2017)
                 data = response.data.decode('utf-8')
                 date_positions = []
-                for date in ['2022-01-01', '2020-01-01', '2018-01-01']:
+                for date in ['2022-01-01', '2021-01-01', '2020-01-01', '2019-01-01', '2018-01-01', '2017-01-01']:
                     date_positions.append((date, data.find(date)))
                 # Check that dates appear in descending order (newest added first)
-                assert date_positions[0][1] < date_positions[1][1] < date_positions[2][1]
+                assert date_positions[0][1] < date_positions[1][1] < date_positions[2][1] < date_positions[3][1] < date_positions[4][1] < date_positions[5][1]

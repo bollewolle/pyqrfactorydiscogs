@@ -325,13 +325,19 @@ def releases(folder_id):
         if sort_order == 'artist_az':
             sorted_releases = sorted(
                 releases_list,
-                key=lambda x: x.get('artist', '').lower(),
+                key=lambda x: (
+                    x.get('artist', '').lower(),
+                    int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0
+                ),
                 reverse=False
             )
         elif sort_order == 'artist_za':
             sorted_releases = sorted(
                 releases_list,
-                key=lambda x: x.get('artist', '').lower(),
+                key=lambda x: (
+                    x.get('artist', '').lower(),
+                    int(x.get('year', 0)) if str(x.get('year', '')).isdigit() else 0
+                ),
                 reverse=True
             )
         elif sort_order == 'oldest_first':
