@@ -492,7 +492,7 @@ def editable_preview():
         for release in csv_preview_data:
             # Start with template format
             row_data = {}
-            
+             
             # Map the basic fields
             for i, field_name in enumerate(header):
                 if field_name == 'Type':
@@ -538,7 +538,11 @@ def editable_preview():
                 elif field_name == 'IconBorderColor':
                     row_data[field_name] = template_format[i]
                 elif field_name == 'BottomText':
-                    row_data[field_name] = template_format[i].replace('{artist}', release.get('artist', '')).replace('{title}', release.get('title', ''))
+                    bottom_text = template_format[i]
+                    bottom_text = bottom_text.replace('{artist}', release.get('artist', ''))
+                    bottom_text = bottom_text.replace('{title}', release.get('title', ''))
+                    bottom_text = bottom_text.replace('{year}', str(release.get('year', '')))
+                    row_data[field_name] = bottom_text
                 elif field_name == 'BottomTextSize':
                     row_data[field_name] = template_format[i]
                 elif field_name == 'BottomTextColor':
@@ -554,7 +558,8 @@ def editable_preview():
                 elif field_name == 'Content':
                     row_data[field_name] = template_format[i].replace('{url}', release.get('url', ''))
                 elif field_name == 'FileName':
-                    row_data[field_name] = template_format[i].replace('{BottomText}', release.get('artist', '') + ' – ' + release.get('title', ''))
+                    filename = template_format[i].replace('{BottomText}', release.get('artist', '') + ' – ' + release.get('title', '') + ' [' + str(release.get('year', '')) + ']')
+                    row_data[field_name] = filename
                 elif field_name == 'Artist':
                     row_data[field_name] = release.get('Artist', '')
                 elif field_name == 'Title':
@@ -563,7 +568,7 @@ def editable_preview():
                     row_data[field_name] = release.get('URL', '')
                 else:
                     row_data[field_name] = ''
-            
+             
             csv_rows.append(row_data)
 
         return render_template(

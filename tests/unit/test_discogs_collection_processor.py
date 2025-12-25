@@ -19,17 +19,19 @@ class TestDiscogsCollectionProcessor:
         assert processor is not None
 
     def test_extract_release_info_valid_data(self, mock_release_data):
-        """Test extraction of release information with valid data"""
+        """Test extraction of release information with valid data including year"""
         processor = DiscogsCollectionProcessor()
-        
+         
         result = processor.extract_release_info(mock_release_data)
         
         assert len(result) == 2
         assert result[0]['artist'] == 'Artist One'
         assert result[0]['title'] == 'Album One'
+        assert result[0]['year'] == 2020
         assert result[0]['url'] == 'https://www.discogs.com/release/100-Artist-One-Album-One'
         assert result[1]['artist'] == 'Artist Two'
         assert result[1]['title'] == 'Album Two'
+        assert result[1]['year'] == 2021
         assert result[1]['url'] == 'https://www.discogs.com/release/101-Artist-Two-Album-Two'
 
     def test_extract_release_info_missing_fields(self):
@@ -52,6 +54,31 @@ class TestDiscogsCollectionProcessor:
         result = processor.extract_release_info([])
         assert result == []
 
+    def test_extract_release_info_without_year(self):
+        """Test extraction with release data that doesn't include year field"""
+        processor = DiscogsCollectionProcessor()
+        
+        # Release data without year field
+        release_data_without_year = [
+            {
+                'id': 102,
+                'title': 'Album Without Year',
+                'artist': 'Artist Without Year',
+                'format': [{'name': 'Vinyl', 'qty': '1'}],
+                'label': 'Label Without Year',
+                'url': 'https://www.discogs.com/release/102-Artist-Without-Year-Album-Without-Year'
+            }
+        ]
+        
+        result = processor.extract_release_info(release_data_without_year)
+        
+        assert len(result) == 1
+        assert result[0]['artist'] == 'Artist Without Year'
+        assert result[0]['title'] == 'Album Without Year'
+        assert result[0]['url'] == 'https://www.discogs.com/release/102-Artist-Without-Year-Album-Without-Year'
+        # Year should not be included if not present in source data
+        assert 'year' not in result[0]
+
     def test_extract_release_info_invalid_input_type(self):
         """Test extraction with invalid input type"""
         processor = DiscogsCollectionProcessor()
@@ -60,12 +87,12 @@ class TestDiscogsCollectionProcessor:
             processor.extract_release_info("not a list")
 
     def test_generate_collection_csv_valid_data(self, mock_release_data):
-        """Test CSV generation with valid data"""
+        """Test CSV generation with valid data including year"""
         processor = DiscogsCollectionProcessor()
-        
-        # Create a temporary template file
-        template_content = """artist,title,url
-{artist},{title},{url}"""
+         
+        # Create a temporary template file with year placeholder
+        template_content = """artist,title,year,url
+{artist},{title},{year},{url}"""
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as template_file:
             template_file.write(template_content)
@@ -75,26 +102,26 @@ class TestDiscogsCollectionProcessor:
             # Create output path
             with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as output_file:
                 output_path = output_file.name
-            
+             
             # Extract release info first
             release_info = processor.extract_release_info(mock_release_data)
-            
+             
             # Generate CSV
             processor.generate_collection_csv(release_info, template_path, output_path)
-            
+             
             # Verify output file was created and contains expected content
             assert os.path.exists(output_path)
             
             with open(output_path, 'r') as f:
                 content = f.read()
                 lines = content.strip().split('\n')
-                
+                 
                 # Should have header + 2 data lines
                 assert len(lines) == 3
-                assert lines[0] == 'artist,title,url'
-                assert 'Artist One,Album One,https://www.discogs.com/release/100-Artist-One-Album-One' in lines[1]
-                assert 'Artist Two,Album Two,https://www.discogs.com/release/101-Artist-Two-Album-Two' in lines[2]
-        
+                assert lines[0] == 'artist,title,year,url'
+                assert 'Artist One,Album One,2020,https://www.discogs.com/release/100-Artist-One-Album-One' in lines[1]
+                assert 'Artist Two,Album Two,2021,https://www.discogs.com/release/101-Artist-Two-Album-Two' in lines[2]
+         
         finally:
             # Clean up temporary files
             if os.path.exists(template_path):

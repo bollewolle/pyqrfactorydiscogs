@@ -33,15 +33,15 @@ class DiscogsCollectionProcessor:
 
     def extract_release_info(self, release_data: List[Dict]) -> List[Dict]:
         """
-        Extract artist, title, and URL information from each release entry.
+        Extract artist, title, year, and URL information from each release entry.
 
         Args:
             release_data (List[Dict]): List of release dictionaries containing 'artist',
-                'title', and 'url' fields. Other fields like 'id', 'year', 'format',
+                'title', 'year', and 'url' fields. Other fields like 'id', 'format',
                 'label', etc. are ignored by this method.
 
         Returns:
-            List[Dict]: List of dictionaries with just 'artist', 'title', and 'url' keys
+            List[Dict]: List of dictionaries with just 'artist', 'title', 'year', and 'url' keys
 
         Raises:
             ValueError: If input data is not a list or contains invalid entries
@@ -50,7 +50,8 @@ class DiscogsCollectionProcessor:
         Note:
             The method validates that each release dictionary contains the three required fields.
             If any field is missing, it raises a ValueError with details about which fields are missing.
-            The resulting list contains simplified dictionaries with only artist, title, and URL information.
+            The resulting list contains simplified dictionaries with artist, title, year, and URL information.
+            The 'year' field is optional and will be included if present in the release data.
         """
         if not isinstance(release_data, list):
             raise ValueError("release_data must be a list")
@@ -66,11 +67,17 @@ class DiscogsCollectionProcessor:
                 raise ValueError(f"Release entry missing required fields: {missing_fields}")
 
             # Create simplified dictionary with just the needed info
-            extracted_info.append({
+            release_info = {
                 'artist': release['artist'],
                 'title': release['title'],
                 'url': release['url']
-            })
+            }
+            
+            # Include year if available
+            if 'year' in release:
+                release_info['year'] = release['year']
+
+            extracted_info.append(release_info)
 
         return extracted_info
 
@@ -80,7 +87,7 @@ class DiscogsCollectionProcessor:
 
         Args:
             release_data (List[Dict]): List of release dictionaries containing 'artist',
-                'title', and 'url' fields. Other fields are ignored.
+                'title', 'year', and 'url' fields. Other fields are ignored.
             template_path (str): Path to the CSV template file containing header and format line
             output_path (str): Path where the generated CSV should be saved
 
@@ -96,9 +103,9 @@ class DiscogsCollectionProcessor:
         Note:
             The method reads the first two lines from the template CSV:
             - First line is used as header (column names)
-            - Second line contains format placeholders {artist}, {title}, and {url}
+            - Second line contains format placeholders {artist}, {title}, {year}, and {url}
             These placeholders are replaced with actual values from each release entry.
-            The resulting CSV will have one row per release containing just artist, title, and URL information.
+            The resulting CSV will have one row per release containing artist, title, year, and URL information.
         """
         if not isinstance(release_data, list):
             raise ValueError("release_data must be a list")
@@ -135,12 +142,14 @@ class DiscogsCollectionProcessor:
             # Replace placeholders with actual values
             artist = release.get('artist', '')
             title = release.get('title', '')
+            year = release.get('year', '')
             url = release.get('url', '')
 
             # Create new line by replacing placeholders in the format template
             template_str = ','.join(template_format_line)
             new_line = template_str.replace('{artist}', str(artist))
             new_line = new_line.replace('{title}', str(title))
+            new_line = new_line.replace('{year}', str(year))
             new_line = new_line.replace('{url}', str(url))
 
             new_line = new_line.split(',')
