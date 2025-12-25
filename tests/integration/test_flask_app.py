@@ -10,11 +10,32 @@ from unittest.mock import patch, MagicMock
 class TestFlaskApp:
     """Test suite for Flask application"""
 
-    def test_index_route(self, flask_test_client):
-        """Test the index route"""
+    def test_landing_route(self, flask_test_client):
+        """Test the landing route"""
         response = flask_test_client.get('/')
         assert response.status_code == 200
         assert b'Discogs Collection to QR Factory CSV Generator' in response.data
+        assert b'Select Releases by Folders' in response.data
+        assert b'Select Releases by Date Added' in response.data
+
+    def test_authenticate_page_route(self, flask_test_client):
+        """Test the authentication page route"""
+        response = flask_test_client.get('/authenticate-page')
+        assert response.status_code == 200
+        assert b'Consumer Key:' in response.data
+        assert b'Consumer Secret:' in response.data
+
+    def test_select_by_folders_route_unauthenticated(self, flask_test_client):
+        """Test select by folders route when not authenticated"""
+        response = flask_test_client.get('/select-by-folders')
+        # Should redirect to authentication page
+        assert response.status_code == 302
+
+    def test_select_by_date_route_unauthenticated(self, flask_test_client):
+        """Test select by date route when not authenticated"""
+        response = flask_test_client.get('/select-by-date')
+        # Should redirect to authentication page
+        assert response.status_code == 302
 
     def test_health_check_route(self, flask_test_client):
         """Test the health check endpoint"""
@@ -38,20 +59,20 @@ class TestFlaskApp:
             # Mock the client
             mock_client = MagicMock()
             mock_client_class.return_value = mock_client
-            
+             
             # Mock authentication
             mock_client.authenticate.return_value = None
             mock_client.user = MagicMock()
             mock_client.user.username = "test_user"
-            
+             
             response = flask_test_client.post('/authenticate', data={
                 'consumer_key': 'test_key',
                 'consumer_secret': 'test_secret'
             }, follow_redirects=True)
-            
+             
             assert response.status_code == 200
-            # Should redirect to folders page after successful authentication
-            assert b'Collection Folders' in response.data or b'folders' in response.data
+            # Should redirect to landing page after successful authentication
+            assert b'Select Releases by Folders' in response.data or b'Select Releases by Date Added' in response.data
 
     def test_folders_route_unauthenticated(self, flask_test_client):
         """Test folders route when not authenticated"""

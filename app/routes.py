@@ -31,8 +31,8 @@ def is_test_environment() -> bool:
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
-def index():
-    """Main page with authentication form or auto-authentication if .env exists"""
+def landing():
+    """Landing page with selection options"""
     # Skip auto-authentication during tests
     if not is_test_environment() and os.path.exists('.env'):
         load_dotenv(DOTENV_PATH)
@@ -43,8 +43,9 @@ def index():
         oauth_token = os.getenv('DISCOGS_OAUTH_TOKEN')
         oauth_secret = os.getenv('DISCOGS_OAUTH_TOKEN_SECRET')
         
-        # If all credentials are present, auto-authenticate and redirect
-        if consumer_key and consumer_secret and oauth_token and oauth_secret:
+        # If all credentials are present and user is not already authenticated, auto-authenticate
+        if (consumer_key and consumer_secret and oauth_token and oauth_secret and
+            ('oauth_token' not in session or 'oauth_secret' not in session)):
             try:
                 # Initialize client with credentials from .env
                 client = DiscogsCollectionClient(
@@ -65,14 +66,43 @@ def index():
                 session['oauth_secret'] = oauth_secret
                 
                 flash('Successfully authenticated using .env credentials!', 'success')
-                return redirect(url_for('main.folders'))
+                return redirect(url_for('main.landing'))
                 
             except Exception as e:
                 current_app.logger.error(f"Auto-authentication error: {str(e)}")
-                # If auto-authentication fails, show the authentication form
+                # If auto-authentication fails, continue to show the landing page
                 pass
+     
+    # Check if user is authenticated
+    authenticated = 'oauth_token' in session and 'oauth_secret' in session
     
+    return render_template('landing.html', authenticated=authenticated)
+
+@bp.route('/authenticate-page')
+def authenticate_page():
+    """Authentication page for Discogs credentials"""
     return render_template('index.html')
+
+@bp.route('/select-by-folders')
+def select_by_folders():
+    """Route for selecting releases by folders"""
+    # Check if authenticated
+    if 'oauth_token' not in session or 'oauth_secret' not in session:
+        flash('Please authenticate first', 'error')
+        return redirect(url_for('main.authenticate_page'))
+    
+    return redirect(url_for('main.folders'))
+
+@bp.route('/select-by-date')
+def select_by_date():
+    """Route for selecting releases by date added (placeholder for future functionality)"""
+    # Check if authenticated
+    if 'oauth_token' not in session or 'oauth_secret' not in session:
+        flash('Please authenticate first', 'error')
+        return redirect(url_for('main.authenticate_page'))
+    
+    flash('Select releases by date added functionality is coming soon!', 'info')
+    return redirect(url_for('main.landing'))
 
 @bp.route('/authenticate', methods=['POST'])
 def authenticate():
@@ -84,7 +114,7 @@ def authenticate():
 
     if not consumer_key or not consumer_secret:
         flash('Consumer key and secret are required', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     try:
         # Initialize client with credentials from form
@@ -148,12 +178,12 @@ def authenticate():
                 current_app.logger.error(f"Failed to update .env file: {str(env_error)}")
 
         flash('Successfully authenticated!', 'success')
-        return redirect(url_for('main.folders'))
+        return redirect(url_for('main.landing'))
 
     except Exception as e:
         current_app.logger.error(f"Authentication error: {str(e)}")
         flash('An error occurred during authentication', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.landing'))
 
 @bp.route('/oauth-callback')
 def oauth_callback():
@@ -232,7 +262,7 @@ def folders():
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     try:
         # Initialize client with credentials and tokens from session
@@ -260,7 +290,7 @@ def folders():
     except Exception as e:
         current_app.logger.error(f"Error fetching folders: {str(e)}")
         flash('Failed to retrieve collection folders', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.landing'))
 
 @bp.route('/releases/<int:folder_id>', methods=['GET', 'POST'])
 def releases(folder_id):
@@ -281,7 +311,7 @@ def releases(folder_id):
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     try:
         # Initialize client with credentials and tokens from session
@@ -370,7 +400,7 @@ def releases(folder_id):
     except Exception as e:
         current_app.logger.error(f"Error fetching releases: {str(e)}")
         flash('Failed to retrieve releases from folder', 'error')
-        return redirect(url_for('main.folders'))
+        return redirect(url_for('main.landing'))
 
 
 @bp.route('/preview/', methods=['GET', 'POST'])
@@ -382,7 +412,7 @@ def preview_csv():
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     try:
         # Get selected release IDs from form
@@ -468,7 +498,7 @@ def editable_preview():
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     # Check if preview exists
     if 'csv_preview' not in session:
@@ -590,7 +620,7 @@ def generate_editable_csv():
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     try:
         # Get row count
@@ -723,7 +753,7 @@ def download_csv():
     # Check if authenticated
     if 'oauth_token' not in session or 'oauth_secret' not in session:
         flash('Please authenticate first', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.authenticate_page'))
 
     # Check if preview exists
     if 'csv_preview' not in session:
@@ -780,4 +810,4 @@ def clear_session():
     """
     session.clear()
     flash('Session cleared', 'info')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.landing'))
