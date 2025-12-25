@@ -52,6 +52,42 @@
             <button type="button" name="deselect-all" id="deselect-all" class="btn-secondary">Deselect All</button>
         </div>
 
+        <div style="margin-top: 15px;">
+            <label for="letter-select">Select by Artist Starting Letter:</label>
+            <select id="letter-select" name="letter-select" multiple style="width: 200px; height: 100px;">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="G">G</option>
+                <option value="H">H</option>
+                <option value="I">I</option>
+                <option value="J">J</option>
+                <option value="K">K</option>
+                <option value="L">L</option>
+                <option value="M">M</option>
+                <option value="N">N</option>
+                <option value="O">O</option>
+                <option value="P">P</option>
+                <option value="Q">Q</option>
+                <option value="R">R</option>
+                <option value="S">S</option>
+                <option value="T">T</option>
+                <option value="U">U</option>
+                <option value="V">V</option>
+                <option value="W">W</option>
+                <option value="X">X</option>
+                <option value="Y">Y</option>
+                <option value="Z">Z</option>
+                <option value="0-9">0-9</option>
+                <option value="other">Other</option>
+            </select>
+            <button type="button" id="select-by-letter" style="margin-left: 10px;">Select by Letter</button>
+            <button type="button" id="deselect-by-letter" class="btn-secondary">Deselect by Letter</button>
+        </div>
+
         <div class="actions">
             <button type="submit" name="action" value="preview">Preview CSV</button>
             <a href="{{ url_for('main.folders') }}" class="btn-secondary">Back to Folders</a>
@@ -73,6 +109,72 @@
                 const checkboxes = document.querySelectorAll('input[name="release_ids"]');
                 checkboxes.forEach(function(checkbox) {
                     checkbox.checked = false;
+                });
+            });
+
+            // Select by Letter button
+            document.getElementById('select-by-letter').addEventListener('click', function() {
+                const selectedLetters = Array.from(document.getElementById('letter-select').selectedOptions)
+                    .map(option => option.value);
+                
+                if (selectedLetters.length === 0) {
+                    alert('Please select at least one letter');
+                    return;
+                }
+
+                const checkboxes = document.querySelectorAll('input[name="release_ids"]');
+                checkboxes.forEach(function(checkbox) {
+                    const row = checkbox.closest('tr');
+                    const artistCell = row.querySelector('td:nth-child(3)'); // Artist is in 3rd column
+                    const artistName = artistCell.textContent.trim();
+                    
+                    // Check if artist starts with any of the selected letters
+                    const shouldSelect = selectedLetters.some(letter => {
+                        if (letter === '0-9') {
+                            return /^[0-9]/.test(artistName);
+                        } else if (letter === 'other') {
+                            return !/^[A-Za-z0-9]/.test(artistName);
+                        } else {
+                            const firstChar = artistName.charAt(0).toUpperCase();
+                            return firstChar === letter;
+                        }
+                    });
+                    
+                    checkbox.checked = shouldSelect;
+                });
+            });
+
+            // Deselect by Letter button
+            document.getElementById('deselect-by-letter').addEventListener('click', function() {
+                const selectedLetters = Array.from(document.getElementById('letter-select').selectedOptions)
+                    .map(option => option.value);
+                
+                if (selectedLetters.length === 0) {
+                    alert('Please select at least one letter');
+                    return;
+                }
+
+                const checkboxes = document.querySelectorAll('input[name="release_ids"]');
+                checkboxes.forEach(function(checkbox) {
+                    const row = checkbox.closest('tr');
+                    const artistCell = row.querySelector('td:nth-child(3)'); // Artist is in 3rd column
+                    const artistName = artistCell.textContent.trim();
+                    
+                    // Check if artist starts with any of the selected letters
+                    const shouldDeselect = selectedLetters.some(letter => {
+                        if (letter === '0-9') {
+                            return /^[0-9]/.test(artistName);
+                        } else if (letter === 'other') {
+                            return !/^[A-Za-z0-9]/.test(artistName);
+                        } else {
+                            const firstChar = artistName.charAt(0).toUpperCase();
+                            return firstChar === letter;
+                        }
+                    });
+                    
+                    if (shouldDeselect) {
+                        checkbox.checked = false;
+                    }
                 });
             });
         });

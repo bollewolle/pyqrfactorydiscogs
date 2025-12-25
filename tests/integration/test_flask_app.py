@@ -338,3 +338,46 @@ class TestFlaskApp:
                     date_positions.append((date, data.find(date)))
                 # Check that dates appear in descending order (newest added first)
                 assert date_positions[0][1] < date_positions[1][1] < date_positions[2][1] < date_positions[3][1] < date_positions[4][1] < date_positions[5][1]
+
+    def test_releases_letter_selection_ui(self, flask_test_client):
+       """Test that the letter selection UI is present on releases page"""
+       with flask_test_client.session_transaction() as sess:
+           sess['oauth_token'] = 'test_token'
+           sess['oauth_secret'] = 'test_secret'
+           sess['consumer_key'] = 'test_key'
+           sess['consumer_secret'] = 'test_secret'
+
+       with patch('app.routes.DiscogsCollectionClient') as mock_client_class:
+           # Mock the client
+           mock_client = MagicMock()
+           mock_client_class.return_value = mock_client
+
+           # Mock release retrieval
+           mock_release_data = {
+               0: {
+                   'id': 100,
+                   'title': 'Album One',
+                   'artist': 'Artist One',
+                   'year': 2020,
+                   'format': [{'name': 'Vinyl', 'qty': '1'}],
+                   'label': 'Label One',
+                   'url': 'https://www.discogs.com/release/100-Artist-One-Album-One'
+               }
+           }
+
+           mock_client.get_collection_releases_by_folder.return_value = mock_release_data
+
+           response = flask_test_client.get('/releases/1')
+           assert response.status_code == 200
+
+           # Check that letter selection UI elements are present
+           data = response.data.decode('utf-8')
+           assert 'Select by Artist Starting Letter:' in data
+           assert 'letter-select' in data
+           assert 'select-by-letter' in data
+           assert 'deselect-by-letter' in data
+
+           # Check that all letter options are present
+           for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0-9', 'other']:
+               assert f'value="{letter}"' in data
