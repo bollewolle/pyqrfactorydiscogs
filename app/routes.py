@@ -436,13 +436,16 @@ def preview_csv():
         # Get releases for selected IDs directly using release IDs
         # This is more efficient than getting all folders and filtering
         releases_data = []
+        counter = 0
         for release_id in selected_ids:
             try:
-                # Convert to int explicitly as get_release_by_releaseid expects int
+               # Convert to int explicitly as get_release_by_releaseid expects int
                 release_id_int = int(str(release_id))
                 release = client.get_release_by_releaseid(release_id_int)
                 if release:
                     releases_data.append(release)
+                counter = counter + 1
+                current_app.logger.info(f"Processing release {counter} of selected id's")
             except Exception as e:
                 current_app.logger.warning(f"Error fetching release {release_id}: {str(e)}")
                 continue

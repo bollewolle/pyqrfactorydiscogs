@@ -9,6 +9,7 @@ The class handles both existing OAuth credentials and new OAuth flows when neede
 import os
 from typing import Dict, List, Optional
 import logging
+from flask import current_app, has_app_context
 
 import discogs_client
 from discogs_client.models import CollectionFolder
@@ -19,7 +20,23 @@ from dotenv import load_dotenv, set_key, get_key
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
 DOTENV_PATH = "../.env"
 
-logger = logging.getLogger(__name__)
+# Configure a fallback logger for non-Flask contexts
+fallback_logger = logging.getLogger(__name__)
+fallback_logger.setLevel(logging.INFO)
+
+# Create a handler and set the formatter
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Add the handler to the fallback logger
+fallback_logger.addHandler(handler)
+
+# Use the Flask app's logger if available, otherwise use the fallback logger
+if has_app_context():
+    logger = current_app.logger
+else:
+    logger = fallback_logger
 
 def is_test_environment() -> bool:
     """
@@ -349,6 +366,7 @@ class DiscogsCollectionClient:
             release_data = []
 
             # Extract release details from the releases in this folder
+            counter = 0
             for r in folder_with_id.releases:
                 release_data.append({
                     'id': r.id,
@@ -360,6 +378,8 @@ class DiscogsCollectionClient:
                     'url': r.release.url.split('-', 1)[0],
                     'date_added': r.date_added
                 })
+                counter = counter + 1
+                logger.info(f"Processing release {counter} of folder {folder_id}")
 
             # Convert list to dictionary format as expected by type annotation
             folder_dict = {}

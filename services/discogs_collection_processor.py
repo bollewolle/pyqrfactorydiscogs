@@ -12,6 +12,26 @@ Classes:
 
 import csv
 from typing import Dict, List
+import logging
+from flask import current_app, has_app_context
+
+# Configure a fallback logger for non-Flask contexts
+fallback_logger = logging.getLogger(__name__)
+fallback_logger.setLevel(logging.INFO)
+
+# Create a handler and set the formatter
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Add the handler to the fallback logger
+fallback_logger.addHandler(handler)
+
+# Use the Flask app's logger if available, otherwise use the fallback logger
+if has_app_context():
+    logger = current_app.logger
+else:
+    logger = fallback_logger
 
 class DiscogsCollectionProcessor:
     """
