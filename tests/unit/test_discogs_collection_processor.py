@@ -38,13 +38,13 @@ class TestDiscogsCollectionProcessor:
         """Test extraction with missing required fields"""
         processor = DiscogsCollectionProcessor()
         
-        # Missing artist field
+        # Missing artist and id fields
         invalid_data = [{
             'title': 'Album One',
             'url': 'https://example.com/album-one'
         }]
         
-        with pytest.raises(ValueError, match="Release entry missing required fields: \['artist'\]"):
+        with pytest.raises(ValueError, match="Release entry missing required fields: \['artist', 'id'\]"):
             processor.extract_release_info(invalid_data)
 
     def test_extract_release_info_empty_list(self):
@@ -180,3 +180,70 @@ class TestDiscogsCollectionProcessor:
         
         with pytest.raises(ValueError, match="release_data must be a list"):
             processor.generate_collection_csv("not a list", 'template.csv', 'output.csv')
+
+    def test_extract_release_info_missing_id_field(self):
+        """Test extraction with missing required id field"""
+        processor = DiscogsCollectionProcessor()
+        
+        # Missing id field
+        invalid_data = [{
+            'artist': 'Test Artist',
+            'title': 'Test Album',
+            'url': 'https://example.com/test'
+        }]
+        
+        with pytest.raises(ValueError, match="Release entry missing required fields: \['id'\]"):
+            processor.extract_release_info(invalid_data)
+
+    def test_extract_release_info_includes_id(self, mock_release_data):
+        """Test that extracted release info includes id field"""
+        processor = DiscogsCollectionProcessor()
+        
+        result = processor.extract_release_info(mock_release_data)
+        
+        assert len(result) == 2
+        assert result[0]['id'] == 100
+        assert result[1]['id'] == 101
+
+    def test_generate_collection_csv_with_filename_placeholder(self, mock_release_data):
+        """Test CSV generation with {filename} placeholder"""
+        processor = DiscogsCollectionProcessor()
+        
+        # Create a template with filename placeholder
+        template_content = """artist,title,year,url,filename
+{artist},{title},{year},{url},{filename}"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as template_file:
+            template_file.write(template_content)
+            template_path = template_file.name
+        
+        try:
+            # Create output path
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as output_file:
+                output_path = output_file.name
+              
+            # Extract release info first
+            release_info = processor.extract_release_info(mock_release_data)
+              
+            # Generate CSV
+            processor.generate_collection_csv(release_info, template_path, output_path)
+              
+            # Verify output file was created and contains expected content
+            assert os.path.exists(output_path)
+              
+            with open(output_path, 'r') as f:
+                content = f.read()
+                lines = content.strip().split('\n')
+                  
+                # Should have header + 2 data lines
+                assert len(lines) == 3
+                assert lines[0] == 'artist,title,year,url,filename'
+                assert 'Artist One,Album One,2020,https://www.discogs.com/release/100-Artist-One-Album-One,100' in lines[1]
+                assert 'Artist Two,Album Two,2021,https://www.discogs.com/release/101-Artist-Two-Album-Two,101' in lines[2]
+          
+        finally:
+            # Clean up temporary files
+            if os.path.exists(template_path):
+                os.unlink(template_path)
+            if os.path.exists(output_path):
+                os.unlink(output_path)

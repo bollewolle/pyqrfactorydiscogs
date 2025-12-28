@@ -53,24 +53,24 @@ class DiscogsCollectionProcessor:
 
     def extract_release_info(self, release_data: List[Dict]) -> List[Dict]:
         """
-        Extract artist, title, year, and URL information from each release entry.
+        Extract artist, title, year, URL, and ID information from each release entry.
 
         Args:
             release_data (List[Dict]): List of release dictionaries containing 'artist',
-                'title', 'year', and 'url' fields. Other fields like 'id', 'format',
+                'title', 'year', 'url', and 'id' fields. Other fields like 'format',
                 'label', etc. are ignored by this method.
 
         Returns:
-            List[Dict]: List of dictionaries with just 'artist', 'title', 'year', and 'url' keys
+            List[Dict]: List of dictionaries with just 'artist', 'title', 'year', 'url', and 'id' keys
 
         Raises:
             ValueError: If input data is not a list or contains invalid entries
-            ValueError: If any release entry is missing required fields ('artist', 'title', or 'url')
+            ValueError: If any release entry is missing required fields ('artist', 'title', 'url', or 'id')
 
         Note:
-            The method validates that each release dictionary contains the three required fields.
+            The method validates that each release dictionary contains the required fields.
             If any field is missing, it raises a ValueError with details about which fields are missing.
-            The resulting list contains simplified dictionaries with artist, title, year, and URL information.
+            The resulting list contains simplified dictionaries with artist, title, year, URL, and ID information.
             The 'year' field is optional and will be included if present in the release data.
         """
         if not isinstance(release_data, list):
@@ -80,7 +80,7 @@ class DiscogsCollectionProcessor:
 
         for release in release_data:
             # Validate required fields exist
-            required_fields = ['artist', 'title', 'url']
+            required_fields = ['artist', 'title', 'url', 'id']
             missing_fields = [field for field in required_fields if field not in release]
 
             if missing_fields:
@@ -90,9 +90,10 @@ class DiscogsCollectionProcessor:
             release_info = {
                 'artist': release['artist'],
                 'title': release['title'],
-                'url': release['url']
+                'url': release['url'],
+                'id': release['id']
             }
-            
+             
             # Include year if available
             if 'year' in release:
                 release_info['year'] = release['year']
@@ -107,7 +108,7 @@ class DiscogsCollectionProcessor:
 
         Args:
             release_data (List[Dict]): List of release dictionaries containing 'artist',
-                'title', 'year', and 'url' fields. Other fields are ignored.
+                'title', 'year', 'url', and 'id' fields. Other fields are ignored.
             template_path (str): Path to the CSV template file containing header and format line
             output_path (str): Path where the generated CSV should be saved
 
@@ -123,9 +124,10 @@ class DiscogsCollectionProcessor:
         Note:
             The method reads the first two lines from the template CSV:
             - First line is used as header (column names)
-            - Second line contains format placeholders {artist}, {title}, {year}, and {url}
+            - Second line contains format placeholders {artist}, {title}, {year}, {url}, and {filename}
             These placeholders are replaced with actual values from each release entry.
-            The resulting CSV will have one row per release containing artist, title, year, and URL information.
+            The resulting CSV will have one row per release containing artist, title, year, URL, and filename information.
+            The {filename} placeholder is replaced with the release ID.
         """
         if not isinstance(release_data, list):
             raise ValueError("release_data must be a list")
@@ -164,6 +166,7 @@ class DiscogsCollectionProcessor:
             title = release.get('title', '')
             year = release.get('year', '')
             url = release.get('url', '')
+            filename = release.get('id', '')
 
             # Create new line by replacing placeholders in the format template
             template_str = ','.join(template_format_line)
@@ -171,6 +174,7 @@ class DiscogsCollectionProcessor:
             new_line = new_line.replace('{title}', str(title))
             new_line = new_line.replace('{year}', str(year))
             new_line = new_line.replace('{url}', str(url))
+            new_line = new_line.replace('{filename}', str(filename))
 
             new_line = new_line.split(',')
 

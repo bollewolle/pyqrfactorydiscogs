@@ -591,7 +591,7 @@ def editable_preview():
                 elif field_name == 'Content':
                     row_data[field_name] = template_format[i].replace('{url}', release.get('url', ''))
                 elif field_name == 'FileName':
-                    filename = template_format[i].replace('{BottomText}', release.get('artist', '') + ' – ' + release.get('title', '') + ' [' + str(release.get('year', '')) + ']')
+                    filename = template_format[i].replace('{filename}', str(release.get('id', '')))
                     row_data[field_name] = filename
                 elif field_name == 'Artist':
                     row_data[field_name] = release.get('Artist', '')
