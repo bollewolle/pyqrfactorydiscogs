@@ -4,16 +4,17 @@ A web application that allows users to authenticate with Discogs API, retrieve t
 
 ## Features
 
-- ✅ OAuth authentication with Discogs API (web-based flow)
+- ✅ OAuth authentication with Discogs API (web-based flow with callback)
 - ✅ Auto-authentication using `.env` credentials if available
 - ✅ Retrieve collection folders from Discogs
 - ✅ Browse releases within selected folders
-- ✅ Sort releases by release year (newest first)
-- ✅ Select individual releases or all releases
+- ✅ Sort releases by multiple criteria (Artist A-Z, Artist Z-A, Newest First, Oldest First, Date Added)
+- ✅ Select individual releases, all releases, or by artist starting letter
 - ✅ Preview CSV output before final generation
 - ✅ Edit CSV data in a web interface before download
 - ✅ Download CSV in QR Factory 3 compatible format
 - ✅ Session management with clear session functionality
+- ✅ Landing page with multiple selection options
 
 ## Installation
 
@@ -25,14 +26,23 @@ A web application that allows users to authenticate with Discogs API, retrieve t
 
 ### Setup
 
-1. Clone this repository:
+1. **Create a Discogs Application** (Required):
+
+   - Go to [Discogs](https://www.discogs.com/) → Settings → Developers
+   - Click "Create an application"
+   - As **Application Name**, enter: `pyqrfactorydiscogs`
+   - As **Description** (optional), enter: "Create CSV list of Discogs collection in the format expected to be imported in QR Factory 3 to print out QR codes with URL links to each release in the collection"
+   - As **Callback URL**, enter: `http://127.0.0.1:5000/auth/callback`
+   - Save the changes and note the generated **Consumer Key** and **Consumer Secret**
+
+2. Clone this repository:
 
 ```bash
 git clone https://github.com/yourusername/pyqrfactorydiscogs.git
 cd pyqrfactorydiscogs
 ```
 
-2. Install dependencies:
+3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -44,7 +54,7 @@ uv pip install .
 mise run install
 ```
 
-3. Create a `.env` file based on `.env.example` and add your Discogs API credentials:
+4. Create a `.env` file based on `.env.example` and add your Discogs API credentials:
 
 ```bash
 cp .env.example .env
@@ -84,30 +94,36 @@ The application will be available at `http://localhost:5000`
 
 ### User Workflow
 
-1. **Authentication**
+1. **Landing Page**
 
-   - Enter your Discogs API Consumer Key and Consumer Secret
+   - Choose between different selection methods
+   - Select releases by folders or by date added (coming soon)
+
+2. **Authentication**
+
+   - Enter your Discogs API Consumer Key and Consumer Secret (obtained from creating a Discogs application as described in Setup step 1)
    - Click "Authenticate" to generate OAuth token and secret
    - If `.env` file exists with valid credentials, auto-authentication occurs
 
-2. **Folder Selection**
+3. **Folder Selection**
 
    - View all folders in your Discogs collection
    - Select the folder you want to process
 
-3. **Release Browsing**
+4. **Release Browsing**
 
    - View all releases in the selected folder
-   - Sort by release year (newest first)
-   - Select individual releases or "Select All"
+   - Sort by multiple criteria: Artist (A-Z), Artist (Z-A), Newest First, Oldest First, Date Added
+   - Select individual releases, "Select All", or select by artist starting letter
+   - Advanced filtering with letter-based selection dropdown
 
-4. **CSV Preview & Editing**
+5. **CSV Preview & Editing**
 
    - Review the generated CSV data before final download
    - Edit any field values in the web interface
    - Make any adjustments if needed
 
-5. **Download**
+6. **Download**
    - Click "Generate CSV" to download the final file in QR Factory 3 format
    - CSV includes all QR Factory 3 template fields with your release data
 
@@ -121,9 +137,10 @@ The application will be available at `http://localhost:5000`
 │   └── templates/                # HTML templates
 │       ├── base.html             # Base template
 │       ├── index.html            # Authentication page
+│       ├── landing.html          # Landing page with selection options
 │       ├── oauth_callback.html    # OAuth callback page
 │       ├── folders.html          # Folder selection page
-│       ├── releases.html         # Release browsing page
+│       ├── releases.html         # Release browsing page with advanced sorting
 │       ├── preview.html          # Basic CSV preview page
 │       └── editable_preview.html # Editable CSV preview page
 ├── services/                     # Service modules
@@ -156,11 +173,13 @@ The application will be available at `http://localhost:5000`
 
 The `DiscogsCollectionClient` class in `services/discogs_api_client.py` handles all interactions with the Discogs API:
 
-- OAuth authentication flow (web-based and CLI)
+- OAuth authentication flow (web-based with callback and CLI)
+- Web-based OAuth flow with callback URL support
 - Retrieving collection folders
 - Getting releases by folder ID
 - Fetching individual releases by release ID
 - Automatic credential management with `.env` file
+- Complete OAuth flow with access token exchange
 
 ### CSV Processor
 
@@ -172,11 +191,14 @@ The `DiscogsCollectionProcessor` class in `services/discogs_collection_processor
 
 ### Flask Routes
 
-- `/` - Authentication page (auto-authenticates if `.env` credentials exist)
+- `/` - Landing page (auto-authenticates if `.env` credentials exist)
+- `/authenticate-page` - OAuth authentication page
 - `/authenticate` - OAuth authentication handler
 - `/oauth-callback` - OAuth callback handler
+- `/select-by-folders` - Route for selecting releases by folders
+- `/select-by-date` - Route for selecting releases by date added (placeholder)
 - `/folders` - Folder selection page
-- `/releases/<folder_id>` - Release browsing page with sorting
+- `/releases/<folder_id>` - Release browsing page with advanced sorting and filtering
 - `/preview/` - CSV preview generation
 - `/editable-preview/` - Editable CSV preview page
 - `/generate-editable-csv` - Generate CSV from editable data
@@ -214,13 +236,43 @@ Test structure:
 - **Integration tests**: Test interactions between components
 - **End-to-end tests**: Test complete user workflows (in `tests/e2e/`)
 
+## Advanced Features
+
+### Sorting Options
+
+The application provides multiple sorting options for releases:
+
+- **Artist (A-Z)**: Sort releases alphabetically by artist name (ascending)
+- **Artist (Z-A)**: Sort releases alphabetically by artist name (descending)
+- **Newest First**: Sort releases by year (newest to oldest)
+- **Oldest First**: Sort releases by year (oldest to newest)
+- **Date Added**: Sort releases by when they were added to your collection
+
+### Letter-Based Selection
+
+The releases page includes an advanced letter-based selection feature:
+
+- Select releases by artist starting letter using a dropdown interface
+- Choose multiple letters at once for batch selection
+- Search and filter letters for easy navigation
+- Select or deselect all releases starting with specific letters
+- Supports letters A-Z, numbers (0-9), and other characters
+
+### Selection Methods
+
+- **Select All**: Quickly select all releases in the current view
+- **Deselect All**: Clear all current selections
+- **Select by Letter**: Select releases based on artist starting letter
+- **Deselect by Letter**: Remove selections based on artist starting letter
+- **Individual Selection**: Check individual releases for precise control
+
 ## QR Factory 3 Format
 
 The generated CSV uses the QR Factory 3 template format with placeholders that are replaced with actual release data:
 
-- `BottomText` field: `{artist} – {title}` (e.g., "SOHN – Albadas")
+- `BottomText` field: `{artist} – {title} [{year}]` (e.g., "SOHN – Albadas [2023]")
 - `Content` field: `{url}` (e.g., "https://www.discogs.com/release/12345678")
-- `FileName` field: `{BottomText}` (e.g., "SOHN – Albadas.png")
+- `FileName` field: `{filename}` (e.g., "12345678")
 
 The template includes all QR Factory 3 configuration fields:
 
@@ -246,8 +298,14 @@ This format allows QR Factory 3 to generate QR codes with dynamic content and pr
    - Verify your authentication token is valid
 
 3. **CSV Generation Errors**
+
    - Check that all releases have the required fields (artist, title, url)
    - Verify the template file exists and is readable
+
+4. **OAuth Callback URL Issues**
+   - Ensure your Discogs application has the correct callback URL: `http://127.0.0.1:5000/auth/callback`
+   - If you change the callback URL in your Discogs application, update the `.env` file accordingly
+   - Make sure your local development server is running on port 5000
 
 ## Contributing
 
