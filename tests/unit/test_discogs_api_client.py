@@ -137,6 +137,44 @@ class TestDiscogsCollectionClient:
         folders = client.get_collection_folders()
         assert folders == []
 
+    def test_get_folder_name_by_id(self):
+        """Test getting folder name by ID"""
+        client = DiscogsCollectionClient(
+            consumer_key="test_key",
+            consumer_secret="test_secret",
+            useragent="pyqrfactorydiscogs/1.0"
+        )
+        
+        # Mock the user and folder structure
+        mock_user = Mock()
+        mock_folder1 = Mock()
+        mock_folder1.id = 1
+        mock_folder1.name = "Favorites"
+        
+        mock_folder2 = Mock()
+        mock_folder2.id = 2
+        mock_folder2.name = "Vinyl Collection"
+        
+        mock_user.collection_folders = [mock_folder1, mock_folder2]
+        client.user = mock_user
+        
+        # Test getting existing folder name
+        folder_name = client.get_folder_name_by_id(1)
+        assert folder_name == "Favorites"
+        
+        # Test getting another existing folder name
+        folder_name = client.get_folder_name_by_id(2)
+        assert folder_name == "Vinyl Collection"
+        
+        # Test getting non-existing folder name
+        folder_name = client.get_folder_name_by_id(999)
+        assert folder_name == "Unknown Folder"
+        
+        # Test with no authentication (no user)
+        client.user = None
+        folder_name = client.get_folder_name_by_id(1)
+        assert folder_name == "Unknown Folder"
+
     @patch.object(DiscogsCollectionClient, 'authenticate')
     def test_get_collection_releases_by_folder(self, mock_authenticate):
         """Test release retrieval by folder"""

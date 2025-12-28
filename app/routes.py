@@ -389,12 +389,15 @@ def releases(folder_id):
                 reverse=True
             )
 
+        # Get the actual folder name
+        folder_name = client.get_folder_name_by_id(folder_id)
+
         return render_template(
             'releases.html',
             folder_id=folder_id,
             releases=sorted_releases,
             sort_by=request.args.get('sort', 'date'),
-            folder_name="Selected Folder"  # Add folder name for display
+            folder_name=folder_name
         )
 
     except Exception as e:

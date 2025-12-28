@@ -322,7 +322,7 @@ class DiscogsCollectionClient:
                 # Get all collection folders and their items
                 folders = []
                 folders = self.user.collection_folders
-                
+                 
                 # Extract just the folder names
                 return folders
 
@@ -331,6 +331,34 @@ class DiscogsCollectionClient:
         else:
             print("User is None")
             return []
+
+    def get_folder_name_by_id(self, folder_id: int) -> str:
+        """
+        Get the name of a specific folder by its ID.
+
+        Args:
+            folder_id (int): The ID of the folder to get the name for
+
+        Returns:
+            str: The name of the folder, or "Unknown Folder" if not found
+
+        Raises:
+            ConnectionError: If API request fails or user is not authenticated
+        """
+        try:
+            # Get all collection folders
+            collection_folders = self.get_collection_folders()
+
+            # Find the folder with matching ID
+            for folder in collection_folders:
+                if folder.id == folder_id:
+                    return str(folder.name)
+
+            # If folder not found, return a default name
+            return "Unknown Folder"
+
+        except DiscogsAPIError as error:
+            raise ConnectionError(f"Failed to retrieve folder name: {error}")
 
     def get_collection_releases_by_folder(self, folder_id: int = 0) -> Dict[int, List[Dict]]:
         """
